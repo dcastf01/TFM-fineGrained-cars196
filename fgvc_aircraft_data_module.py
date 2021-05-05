@@ -42,7 +42,7 @@ class FGVCAircraft(pl.LightningDataModule):
 
     def train_dataloader(self):
         return DataLoader(self.FGVCaircraft_train, batch_size=self.batch_size,
-                          suffle=True,
+                          shuffle=True,
                           num_workers=CONFIG.NUM_WORKERS,
                           pin_memory=True,
                           drop_last=False
@@ -50,7 +50,7 @@ class FGVCAircraft(pl.LightningDataModule):
 
     def val_dataloader(self):
         return DataLoader(self.FGVCaircraft_val, batch_size=self.batch_size,
-                          suffle=False,
+                          shuffle=False,
                           num_workers=CONFIG.NUM_WORKERS,
                           pin_memory=True,
                           drop_last=False
@@ -58,7 +58,7 @@ class FGVCAircraft(pl.LightningDataModule):
 
     def test_dataloader(self):
         return DataLoader(self.FGVCaircraft_test, batch_size=self.batch_size,
-                          suffle=False,
+                          shuffle=False,
                           num_workers=CONFIG.NUM_WORKERS,
                           pin_memory=True,
                           drop_last=False
