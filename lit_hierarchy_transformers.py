@@ -32,7 +32,6 @@ class LitHierarchyTransformers(LitSystem):
 
     def training_step(self,batch,batch_idx):
         x,targets=batch
-        target0,target00=targets
         target0,target00,target000=targets
         y0,y00,y000=self.HierarchicalTransformers(x)
         loss0=self.criterion(y0,target0)

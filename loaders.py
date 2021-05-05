@@ -106,7 +106,6 @@ class FGVCAircraftLoader(Loader):
             df_aux=pd.read_csv(filepath_txt,names=["all"],dtype=str)
             df_aux["filename"]=df_aux["all"].astype(str).str[0:7]
             df_aux[level]=df_aux["all"].astype(str).str[8:]
-            print(df_aux.head(1))
             df_aux.drop(labels="all",inplace=True,axis=1)
             df=pd.concat([df,df_aux],axis=1)
         
