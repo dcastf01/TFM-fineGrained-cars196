@@ -29,21 +29,28 @@ class LitHierarchyTransformers(LitSystem):
         y0,y00=self.HierarchicalTransformers(x)
         
         return y0,y00
-    
-    
+
     def training_step(self,batch,batch_idx):
         x,targets=batch
         target0,target00=targets
-        y0,y00=self.HierarchicalTransformers(x)
+        target0,target00,target000=targets
+        y0,y00,y000=self.HierarchicalTransformers(x)
         loss0=self.criterion(y0,target0)
         loss00=self.criterion(y00,target00)
-        loss_total=loss0+loss00
-        preds0_probability=nn.functional.softmax(y0,dim=1)
+        loss000=self.criterion(y000,target000)
+
+        loss_total=loss0+loss00+loss000
         
-        preds00_probability=nn.functional.softmax(y00,dim=1)
+        preds0_probability=y0.softmax(dim=1)
+        preds00_probability=y00.softmax(dim=1)
+        preds000_probability=y000.softmax(dim=1)
+        
         metric_value0=self.train_metrics_base0(preds0_probability,target0)
         metric_value00=self.train_metrics_base00(preds00_probability,target00)
-        data_dict={"loss0":loss0,"loss00":loss00,"loss_total":loss_total,
+        metric_value000=self.train_metrics_base000(preds000_probability,target000)
+        
+        data_dict={"loss0":loss0,"loss00":loss00,"loss000":loss000,
+                   "loss_total":loss_total,
                    **metric_value0,**metric_value00}
         
         self.insert_each_metric_value_into_dict(data_dict,prefix="")
@@ -52,17 +59,22 @@ class LitHierarchyTransformers(LitSystem):
     def validation_step(self, batch, batch_idx):
         '''used for logging metrics'''
         x,targets=batch
-        target0,target00=targets
-        y0,y00=self.HierarchicalTransformers(x)
+        target0,target00,target000=targets
+        y0,y00,y000=self.HierarchicalTransformers(x)
         loss0=self.criterion(y0,target0)
         loss00=self.criterion(y00,target00)
-        loss_total=loss0+loss00
-        preds0_probability=nn.functional.softmax(y0,dim=1)
+        loss000=self.criterion(y000,target000)
+
+        loss_total=loss0+loss00+loss000
         
-        preds00_probability=nn.functional.softmax(y00,dim=1)
+        preds0_probability=y0.softmax(dim=1)
+        preds00_probability=y00.softmax(dim=1)
+        preds000_probability=y000.softmax(dim=1)
         metric_value0=self.valid_metrics_base0(preds0_probability,target0)
         metric_value00=self.valid_metrics_base00(preds00_probability,target00)
-        data_dict={"val_loss0":loss0,"val_loss00":loss00,"val_loss_total":loss_total,
+        metric_value000=self.valid_metrics_base000(preds000_probability,target000)
+        data_dict={"val_loss0":loss0,"val_loss00":loss00, "val_loss00":loss000,
+                   "val_loss_total":loss_total,
                    **metric_value0,**metric_value00}
         
         self.insert_each_metric_value_into_dict(data_dict,prefix="")

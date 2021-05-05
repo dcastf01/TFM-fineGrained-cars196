@@ -20,6 +20,11 @@ class FGVCAircraft(pl.LightningDataModule):
         self.img_folder = os.path.join(self.data_dir,'fgvc-aircraft-2013b', 'data', 'images')
         
         self.loader=default_loader
+        
+        self.classlevel={'level0':30 ,
+                        'level00': 70,  #extraer esta variable del dataset más adelante
+                        'level000':100
+                            }
                 
     def prepare_data(self):
         

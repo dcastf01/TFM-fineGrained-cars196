@@ -71,12 +71,12 @@ class GroceryStoreLoader(Loader):
 class FGVCAircraftLoader(Loader):
     
     def __init__(self,
-                 root_dir:str=os.path.join("data","fgvc-aircraft-2013b"),
+                 root_dir:str="data",
                  hierarchylevel:int=2,
                  split:str="train") -> None:
         
         
-        self.root_dir=os.path.join(root_dir,"data")
+        self.root_dir=os.path.join(root_dir,"fgvc-aircraft-2013b","data")
         self.root_images=os.path.join(self.root_dir,"images")
         self.split=split
         self.num_class_level0=30
