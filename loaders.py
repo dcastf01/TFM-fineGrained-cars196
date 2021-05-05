@@ -35,7 +35,7 @@ class GroceryStoreLoader(Loader):
         self.root_dir=os.path.join(root_dir,"dataset")
         self.split=split
         self.num_class_level0=43
-        self.num_class_level1=81
+        self.num_class_level00=81
         
 
         if self.split=="train":
@@ -68,3 +68,73 @@ class GroceryStoreLoader(Loader):
         return img,(label_level0,label_level00)
 
 
+class FGVCAircraftLoader(Loader):
+    
+    def __init__(self,
+                 root_dir:str=os.path.join("data","fgvc-aircraft-2013b"),
+                 hierarchylevel:int=2,
+                 split:str="train") -> None:
+        
+        
+        self.root_dir=os.path.join(root_dir,"data")
+        self.root_images=os.path.join(self.root_dir,"images")
+        self.split=split
+        self.num_class_level0=30
+        self.num_class_level00=70
+        self.num_class_level000=100
+        
+        
+        df=self.create_df_from_txts()
+        
+        print(df.head(1))
+        super().__init__(df)
+        
+    def create_df_from_txts(self) ->pd.DataFrame:
+        root_all_txt="images"
+        parts={
+                "level0": "manufacturer",
+                "level00": "family",
+                "level000": "variant",
+                    }
+        
+        assert self.split in ["train","val","test"]
+        
+        df=pd.DataFrame()
+        for level,middle_name in parts.items():
+            filename_txt="_".join([root_all_txt,middle_name,self.split+".txt"])
+            filepath_txt=os.path.join(self.root_dir,filename_txt)
+            df_aux=pd.read_csv(filepath_txt,names=["all"],dtype=str)
+            df_aux["filename"]=df_aux["all"].astype(str).str[0:7]
+            df_aux[level]=df_aux["all"].astype(str).str[8:]
+            print(df_aux.head(1))
+            df_aux.drop(labels="all",inplace=True,axis=1)
+            df=pd.concat([df,df_aux],axis=1)
+        
+        
+        df = df.loc[:,~df.columns.duplicated()]
+        
+        df["id0"]=df.groupby(["level0"]).ngroup()
+        df["id00"]=df.groupby(["level00"]).ngroup()
+        df["id000"]=df.groupby(["level000"]).ngroup()
+        
+        return df
+
+    def __getitem__(self, index):
+    
+        img_path=os.path.join(self.root_images,self.data.iloc[index,0]+".jpg")
+        img=self.loader(img_path)
+        img=np.array(img)
+
+        
+        label_level0=torch.tensor(int(self.data.iloc[index]["id0"]))
+        label_level00=torch.tensor(int(self.data.iloc[index]["id00"]))
+        label_level000=torch.tensor(int(self.data.iloc[index]["id000"]))
+        
+        if self.transform:
+            augmentations=self.transform(image=img)
+            img=augmentations["image"]
+        return img,(label_level0,label_level00,label_level000)
+    
+    
+a=FGVCAircraftLoader()
+b=a[0]
