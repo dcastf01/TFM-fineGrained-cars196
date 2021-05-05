@@ -6,7 +6,7 @@ from torchvision.datasets.utils import download_url,extract_archive
 from torch.utils.data import DataLoader
 from torchvision.datasets.folder import default_loader
 from loaders import FGVCAircraftLoader
-
+from config import CONFIG
 class FGVCAircraft(pl.LightningDataModule):
     def __init__(self,data_dir: str = "data", batch_size: int = 32):
         super().__init__()
@@ -41,13 +41,28 @@ class FGVCAircraft(pl.LightningDataModule):
         self.FGVCaircraft_test = FGVCAircraftLoader(self.data_dir, split="test")
 
     def train_dataloader(self):
-        return DataLoader(self.FGVCaircraft_train, batch_size=self.batch_size)
+        return DataLoader(self.FGVCaircraft_train, batch_size=self.batch_size,
+                          suffle=True,
+                          num_workers=CONFIG.NUM_WORKERS,
+                          pin_memory=True,
+                          drop_last=False
+                          )
 
     def val_dataloader(self):
-        return DataLoader(self.FGVCaircraft_val, batch_size=self.batch_size)
+        return DataLoader(self.FGVCaircraft_val, batch_size=self.batch_size,
+                          suffle=False,
+                          num_workers=CONFIG.NUM_WORKERS,
+                          pin_memory=True,
+                          drop_last=False
+                          )
 
     def test_dataloader(self):
-        return DataLoader(self.FGVCaircraft_test, batch_size=self.batch_size)
+        return DataLoader(self.FGVCaircraft_test, batch_size=self.batch_size,
+                          suffle=False,
+                          num_workers=CONFIG.NUM_WORKERS,
+                          pin_memory=True,
+                          drop_last=False
+                          )
     
     
     

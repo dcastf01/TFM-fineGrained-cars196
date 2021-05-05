@@ -2,6 +2,7 @@ import pytorch_lightning as pl
 from loaders import GroceryStoreLoader
 import os
 from torch.utils.data import DataLoader
+from config import CONFIG
 
 class GroceryStoreDataModule(pl.LightningDataModule):
     def __init__(self,data_dir: str = "data", batch_size: int = 32):
@@ -23,10 +24,25 @@ class GroceryStoreDataModule(pl.LightningDataModule):
         self.grocery_store_test = GroceryStoreLoader(self.data_dir, split="test")
 
     def train_dataloader(self):
-        return DataLoader(self.grocery_store_train, batch_size=self.batch_size)
+        return DataLoader(self.grocery_store_train, batch_size=self.batch_size,
+                          suffle=True,
+                          num_workers=CONFIG.NUM_WORKERS,
+                          pin_memory=True,
+                          drop_last=False
+                          )
 
     def val_dataloader(self):
-        return DataLoader(self.grocery_store_val, batch_size=self.batch_size)
+        return DataLoader(self.grocery_store_val, batch_size=self.batch_size,
+                          suffle=False,
+                          num_workers=CONFIG.NUM_WORKERS,
+                          pin_memory=True,
+                          drop_last=False
+                          )
 
     def test_dataloader(self):
-        return DataLoader(self.grocery_store_test, batch_size=self.batch_size)
+        return DataLoader(self.grocery_store_test, batch_size=self.batch_size,
+                          suffle=False,
+                          num_workers=CONFIG.NUM_WORKERS,
+                          pin_memory=True,
+                          drop_last=False
+                          )
