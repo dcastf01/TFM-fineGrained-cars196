@@ -1,0 +1,29 @@
+{
+//     "workbench.preferredLightColorTheme": "Default Dark+",
+//     "terminal.integrated.shell.windows":"C:\\Windows\\System32\\cmd.exe",
+//     // "python.terminal.activateEnvironment": true,
+//     "python.condaPath": " C:\\Users\\dcast\\anaconda3\\Scripts\\conda.exe",
+//     // "terminal.integrated.shellArgs.windows": ["/K", "C:\\Users\\dcast\\anaconda3\\Scripts\\activate D:\\programacion\\Repositorios\\object_detection_TFM\\env"],
+//     "python.pythonPath": "D:\\programacion\\Repositorios\\object_detection_TFM\\env\\python.exe",
+//     "terminal.integrated.shellArgs.windows": [
+//         "/K",
+//         "C:\\Users\\dcast\\anaconda3\\Scripts\\activate D:\\programacion\\Repositorios\\object_detection_TFM\\env"
+//     ],
+//     "python.terminal.activateEnvironment": false,
+//     "python.venvPath": "~/env",
+//      "code-runner"
+        "python.jediEnabled": false,
+        "python.languageServer": "Pylance",
+        "files.watcherExclude": {
+                "**/.git/objects/**": true,
+                "**/.git/subtree-cache/**": true,
+                "**/node_modules/*/**": true,
+                "**/.hg/store/**": true,
+                "**/data/**":true,
+                "**/wandb/**":true,
+        },
+                
+
+
+}
+

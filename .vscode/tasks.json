@@ -1,0 +1,21 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        
+        
+        {
+        "label": "prepare persistent terminal",
+        // "command": "/home/dcast/anaconda3/envs/deep_learning_torch/bin/tmux",
+        "type": "shell",
+        "linux": {
+            "command": "/home/dcast/anaconda3/envs/deep_learning_torch/bin/tmux",
+            "args": [ "new",
+                // "-A",
+                // "-s",
+                // "vscode-${workspaceFolderBasename}"
+                    ],
+                },
+
+        }
+]
+}
