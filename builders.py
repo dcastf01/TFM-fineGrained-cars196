@@ -1,7 +1,7 @@
 
 from config import Dataset
 from grocery_store_data_module import GroceryStoreDataModule
-from fgvc_aricraft_data_module import FGVCAircraft
+from fgvc_aircraft_data_module import FGVCAircraft
 
 def get_datamodule(name_dataset:str):
 

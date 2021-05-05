@@ -5,6 +5,7 @@ import os
 from torchvision.datasets.utils import download_url,extract_archive
 from torch.utils.data import DataLoader
 from torchvision.datasets.folder import default_loader
+from loaders import FGVCAircraftLoader
 
 class FGVCAircraft(pl.LightningDataModule):
     def __init__(self,data_dir: str = "data", batch_size: int = 32):
@@ -19,26 +20,29 @@ class FGVCAircraft(pl.LightningDataModule):
         self.img_folder = os.path.join(self.data_dir,'fgvc-aircraft-2013b', 'data', 'images')
         
         self.loader=default_loader
-            
+                
     def prepare_data(self):
         
         # download
-        self.download()
+        tar_name = self.url.rpartition('/')[-1]
+        if not os.path.isfile(os.path.join(self.root,tar_name)):
+            
+     
+            self.download()
 
     def setup(self, stage=None):
-        
-        self.mnist_test = MNIST(self.data_dir, train=False)
-        mnist_full = MNIST(self.data_dir, train=True)
-        self.mnist_train, self.mnist_val = random_split(mnist_full, [55000, 5000])
+        self.FGVCaircraft_train = FGVCAircraftLoader(self.data_dir, split="train")
+        self.FGVCaircraft_val= FGVCAircraftLoader(self.data_dir, split="val")
+        self.FGVCaircraft_test = FGVCAircraftLoader(self.data_dir, split="test")
 
     def train_dataloader(self):
-        return DataLoader(self.mnist_train, batch_size=self.batch_size)
+        return DataLoader(self.FGVCaircraft_train, batch_size=self.batch_size)
 
     def val_dataloader(self):
-        return DataLoader(self.mnist_val, batch_size=self.batch_size)
+        return DataLoader(self.FGVCaircraft_val, batch_size=self.batch_size)
 
     def test_dataloader(self):
-        return DataLoader(self.mnist_test, batch_size=self.batch_size)
+        return DataLoader(self.FGVCaircraft_test, batch_size=self.batch_size)
     
     
     

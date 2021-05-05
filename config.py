@@ -31,7 +31,7 @@ class CONFIG(object):
     # TRAIN_DIR = "data/train"
     # VAL_DIR = "data/val"
     batch_size:int =1
-    dataset=Dataset.grocerydataset
+    dataset=Dataset.fgvcaircraft
     dataset_name:str=dataset.name
     
     optim=Optim.adam

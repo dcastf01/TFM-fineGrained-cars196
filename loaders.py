@@ -113,9 +113,9 @@ class FGVCAircraftLoader(Loader):
         
         df = df.loc[:,~df.columns.duplicated()]
         
-        df["id0"]=df.groupby(["level0"]).ngroup()
-        df["id00"]=df.groupby(["level00"]).ngroup()
-        df["id000"]=df.groupby(["level000"]).ngroup()
+        df["label0"]=df.groupby(["level0"]).ngroup()
+        df["label00"]=df.groupby(["level00"]).ngroup()
+        df["label000"]=df.groupby(["level000"]).ngroup()
         
         return df
 
@@ -126,9 +126,9 @@ class FGVCAircraftLoader(Loader):
         img=np.array(img)
 
         
-        label_level0=torch.tensor(int(self.data.iloc[index]["id0"]))
-        label_level00=torch.tensor(int(self.data.iloc[index]["id00"]))
-        label_level000=torch.tensor(int(self.data.iloc[index]["id000"]))
+        label_level0=torch.tensor(int(self.data.iloc[index]["label0"]))
+        label_level00=torch.tensor(int(self.data.iloc[index]["label00"]))
+        label_level000=torch.tensor(int(self.data.iloc[index]["label000"]))
         
         if self.transform:
             augmentations=self.transform(image=img)
@@ -136,5 +136,3 @@ class FGVCAircraftLoader(Loader):
         return img,(label_level0,label_level00,label_level000)
     
     
-a=FGVCAircraftLoader()
-b=a[0]
