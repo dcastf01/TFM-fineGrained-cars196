@@ -15,8 +15,10 @@ class LitSystem(pl.LightningModule):
         super().__init__()
 
         metrics_base=get_metrics_collections_base()
-        self.train_metrics_base=metrics_base.clone(prefix="train")
-        self.valid_metrics_base=metrics_base.clone(prefix="valid")
+        self.train_metrics_base0=metrics_base.clone(prefix="train_level0")
+        self.valid_metrics_base0=metrics_base.clone(prefix="valid_level0")
+        self.train_metrics_base00=metrics_base.clone(prefix="train_level00")
+        self.valid_metrics_base00=metrics_base.clone(prefix="valid_level00")
         
         # log hyperparameters
         self.save_hyperparameters()    

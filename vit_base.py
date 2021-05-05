@@ -4,11 +4,15 @@ import timm
 import torch
 
 class HierarchicalTransformers(nn.Module):
-        def __init__(self,class_level0,class_level1,class_level2):
+        def __init__(self,
+                     class_level:dict
+                     ):
+                class_level0=class_level["level0"]
+                class_level00=class_level["level00"]
                 super(HierarchicalTransformers,self).__init__()
                 self.vit1=ViTBase16(num_classes=class_level0)
-                self.vit2=ViTBase16(num_classes=class_level1)
-                self.vit3=ViTBase16(num_classes=class_level2)
+                self.vit2=ViTBase16(num_classes=class_level00)
+                # self.vit3=ViTBase16(num_classes=class_level2)
                 ##test
                 # self.vit1(torch.rand(2,3,224,224),
                 #           torch.rand(2,1,768))
@@ -16,12 +20,10 @@ class HierarchicalTransformers(nn.Module):
         def forward(self, x):
                 y0,x0=self.vit1(x)
                 y00,x00=self.vit2(x,x0)
-                y000,x000=self.vit3(x,x00)
+                # y000,x000=self.vit3(x,x00)
                 
-                return y0,y00,y000
-                
-                
-                
+                return y0,y00
+      
 class ViTBase16(nn.Module):
 
         

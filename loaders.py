@@ -34,6 +34,8 @@ class GroceryStoreLoader(Loader):
         
         self.root_dir=os.path.join(root_dir,"dataset")
         self.split=split
+        self.num_class_level0=43
+        self.num_class_level1=81
         
 
         if self.split=="train":

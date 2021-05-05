@@ -60,5 +60,3 @@ class FGVCAircraft(pl.LightningDataModule):
         print('Done!')
         
         
-dm=FGVCAircraft()
-dm.prepare_data()

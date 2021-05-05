@@ -8,7 +8,9 @@ class GroceryStoreDataModule(pl.LightningDataModule):
         super().__init__()
         self.data_dir = os.path.join(data_dir,"GroceryStoreDataset")
         self.batch_size = batch_size
-        
+        self.classlevel={'level0':43 ,
+                        'level00': 82,  #extraer esta variable del dataset más adelante
+                            }
     def prepare_data(self):
         # manual download from 
         #https://github.com/marcusklasson/GroceryStoreDataset
