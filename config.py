@@ -37,7 +37,7 @@ class CONFIG(object):
     DEVICE: str = "cuda" if torch.cuda.is_available() else "cpu"
     # TRAIN_DIR = "data/train"
     # VAL_DIR = "data/val"
-    batch_size:int =1024
+    batch_size:int =150
     dataset=Dataset.fgvcaircraft
     dataset_name:str=dataset.name
     precision_compute:int=16
@@ -47,7 +47,7 @@ class CONFIG(object):
     transform=TransformsAvailable.timm_noaug
     transform_name:str=transform.name
     
-    lr:float = 1e-2
+    lr:float = 1e-3
     AUTO_LR :bool= False
     # LAMBDA_IDENTITY = 0.0
     NUM_WORKERS:int = 3

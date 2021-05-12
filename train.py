@@ -67,7 +67,7 @@ def main():
     
     trainer=pl.Trainer(
                     logger=wandb_logger,
-                       gpus=1,
+                       gpus=[0],
                        max_epochs=config.NUM_EPOCHS,
                        precision=config.precision_compute,
                     #    limit_train_batches=0.1, #only to debug
