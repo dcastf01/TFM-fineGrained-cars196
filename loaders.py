@@ -5,31 +5,41 @@ import pandas as pd
 import torch
 from torch.utils.data import Dataset
 from torchvision.datasets.folder import default_loader
-
-from augmentations import basic_transform
-
-
+import albumentations as A
+from factory_augmentations import basic_transform,transforms_imagenet_train,transforms_noaug_train
+from torchvision import transforms
 class Loader(Dataset):
-    def __init__(self,df:pd.DataFrame) -> None:
+    def __init__(self,df:pd.DataFrame,transform_fn) -> None:
         super().__init__()
         
         self.data=df
         
-        self.loader=default_loader
-        self.transform=basic_transform
+        self.loader=default_loader        
+        self.transform=transform_fn
+
     def __len__(self):
         return self.data.shape[0]
     
     def __getitem__(self, index):
         return NotImplementedError
         
-        
+    def apply_transform(self,img):
+        if self.transform.__class__ is A.core.composition.Compose:
+            img=np.array(img)
+            augmentations=self.transform(image=img)
+            img=augmentations["image"]
+        elif self.transform.__class__==transforms.transforms.Compose:
+            img=self.transform(img)
+        else:
+            raise ("not valid transform")
+        return img
 class GroceryStoreLoader(Loader):
     
     def __init__(self,
                  root_dir:str=os.path.join("data","GroceryStoreDataset"),
                  hierarchylevel:int=2,
-                 split:str="train") -> None:
+                 split:str="train",
+                 transform_fn=transforms_noaug_train) -> None:
         
         
         self.root_dir=os.path.join(root_dir,"dataset")
@@ -47,24 +57,20 @@ class GroceryStoreLoader(Loader):
         else:
             raise("insert a valid split")
 
-        df=pd.read_csv(file_with_images,delimiter=",")
-        super().__init__(df)
-        
+        df=pd.read_csv(file_with_images,delimiter="," )
+        super().__init__(df,
+                         transform_fn=transform_fn)
         
     
     def __getitem__(self, index):
     
         img_path=os.path.join(self.root_dir,self.data.iloc[index,0])
         img=self.loader(img_path)
-        img=np.array(img)
-
-        
+ 
         label_level0=torch.tensor(int(self.data.iloc[index,1]))
         label_level00=torch.tensor(int(self.data.iloc[index,2]))
+        img=self.apply_transform(img)
         
-        if self.transform:
-            augmentations=self.transform(image=img)
-            img=augmentations["image"]
         return img,(label_level0,label_level00)
 
 
@@ -73,7 +79,9 @@ class FGVCAircraftLoader(Loader):
     def __init__(self,
                  root_dir:str="data",
                  hierarchylevel:int=2,
-                 split:str="train") -> None:
+                 split:str="train",
+                 transform_fn=transforms_noaug_train
+                 ) -> None:
         
         
         self.root_dir=os.path.join(root_dir,"fgvc-aircraft-2013b","data")
@@ -83,11 +91,10 @@ class FGVCAircraftLoader(Loader):
         self.num_class_level00=70
         self.num_class_level000=100
         
-        
         df=self.create_df_from_txts()
         
-        print(df.head(1))
-        super().__init__(df)
+        super().__init__(df,
+                         transform_fn=transform_fn)
         
     def create_df_from_txts(self) ->pd.DataFrame:
         root_all_txt="images"
@@ -122,16 +129,12 @@ class FGVCAircraftLoader(Loader):
     
         img_path=os.path.join(self.root_images,self.data.iloc[index,0]+".jpg")
         img=self.loader(img_path)
-        img=np.array(img)
 
-        
         label_level0=torch.tensor(int(self.data.iloc[index]["label0"]))
         label_level00=torch.tensor(int(self.data.iloc[index]["label00"]))
         label_level000=torch.tensor(int(self.data.iloc[index]["label000"]))
         
-        if self.transform:
-            augmentations=self.transform(image=img)
-            img=augmentations["image"]
+        img=self.apply_transform(img)
         return img,(label_level0,label_level00,label_level000)
     
     
