@@ -41,13 +41,16 @@ class ViTBase16(nn.Module):
         def forward_features(self,x,extra_tensor=None):
                 B = x.shape[0]
                 x = self.model.patch_embed(x)
-                cls_tokens = self.model.cls_token.expand(B, -1, -1)  # stole cls_tokens impl from Phil Wang, thanks
-                x = torch.cat((cls_tokens, x), dim=1)
+                
 
-                x = x + self.model.pos_embed
+                
                 if extra_tensor is not None:
                         cls_tokens_from_previuos_net=torch.unsqueeze(extra_tensor,1)
                         x=torch.cat((cls_tokens_from_previuos_net,x),dim=1)
+                else:
+                        cls_tokens = self.model.cls_token.expand(B, -1, -1)  # stole cls_tokens impl from Phil Wang, thanks
+                        x = torch.cat((cls_tokens, x), dim=1)
+                x = x + self.model.pos_embed
                 x = self.model.pos_drop(x)
 
                 for blk in self.model.blocks:
