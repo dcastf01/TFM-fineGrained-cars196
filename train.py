@@ -44,8 +44,10 @@ def main():
                       config.transform_name)
     #callbacks
     early_stopping=EarlyStopping(monitor='_val_loss_total',
+                                 mode="min",
                                 patience=5,
-                                 verbose=True
+                                 verbose=True,
+                                 check_finite =True
                                  )
 
     checkpoint_callback = ModelCheckpoint(
@@ -80,7 +82,7 @@ def main():
                     #    accelerator="dpp",
                     #    plugins=DDPPlugin(find_unused_parameters=False),
                        callbacks=[
-                            # early_stopping ,
+                            early_stopping ,
                             # checkpoint_callback,
                             # confusion_matrix_wandb,
                             # learning_rate_monitor 
