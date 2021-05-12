@@ -1,33 +1,36 @@
 #https://www.robots.ox.ac.uk/~vgg/data/fgvc-aircraft/
 #https://github.com/lvyilin/pytorch-fgvc-dataset/blob/master/aircraft.py
-import pytorch_lightning as pl
+
 import os 
 from torchvision.datasets.utils import download_url,extract_archive
 from torch.utils.data import DataLoader
-from torchvision.datasets.folder import default_loader
 from loaders import FGVCAircraftLoader
 from config import CONFIG
-class FGVCAircraft(pl.LightningDataModule):
+from template_data_module import TemplateDataModule
+class FGVCAircraft(TemplateDataModule):
     def __init__(self,
                  transform_fn,
-                 data_dir: str = "data", batch_size: int = 32):
-        super().__init__()
-        self.data_dir = data_dir
-        self.batch_size = batch_size
+                 data_dir: str = "data",
+                batch_size: int = 32,
+                 ):
+        
         self.root=data_dir
-        self.transform_fn=transform_fn
         self.url = 'http://www.robots.ox.ac.uk/~vgg/data/fgvc-aircraft/archives/fgvc-aircraft-2013b.tar.gz'
         self.class_types = ('variant', 'family', 'manufacturer')
         self.splits = ('train', 'val', 'trainval', 'test')
-        self.img_folder = os.path.join(self.data_dir,'fgvc-aircraft-2013b', 'data', 'images')
-        
-        self.loader=default_loader
-        
-        self.classlevel={'level0':30 ,
+        self.img_folder = os.path.join(self.root,'fgvc-aircraft-2013b', 'data', 'images')
+        classlevel={'level0':30 ,
                         'level00': 70,  #extraer esta variable del dataset más adelante
                         'level000':100
                             }
-                
+        
+        super().__init__(
+            transform_fn=transform_fn,
+            data_dir=data_dir,
+            batch_size=batch_size,
+            classlevel=classlevel
+                        )
+        
     def prepare_data(self):
         
         # download

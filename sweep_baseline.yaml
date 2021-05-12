@@ -17,13 +17,14 @@ parameters:
   optim_name:
     value: adam
   batch_size:
-    value: 150
-
-  NUM_EPOCHS:
     value: 100
+  IMG_SIZE:
+    value: 448
+  NUM_EPOCHS:
+    value: 30
   lr:
     max: 0.001
-    min: 0.00005
+    min: 0.000005
     distribution: uniform
 
 early_terminate:

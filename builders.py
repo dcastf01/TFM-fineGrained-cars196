@@ -7,42 +7,40 @@ from factory_augmentations import basic_transforms,transforms_imagenet_train,tra
 from lit_vit import LitVIT
 
 import pytorch_lightning as pl
-def get_transform_function(transforms:str):
+def get_transform_function(transforms:str,img_size:int):
     name_transform=TransformsAvailable[transforms.lower()]
     
     if name_transform==TransformsAvailable.basic_transforms:
-        transform_fn=basic_transforms()
+        transform_fn=basic_transforms(img_size=img_size)
     elif name_transform==TransformsAvailable.timm_transforms_imagenet_train:
-        transform_fn=transforms_imagenet_train()
+        transform_fn=transforms_imagenet_train(img_size=img_size)
         
     elif name_transform==TransformsAvailable.timm_noaug:
-        transform_fn=transforms_noaug_train()
-        
-        
+        transform_fn=transforms_noaug_train(img_size=img_size)
+     
     return transform_fn
     
-def get_datamodule(name_dataset:str,batch_size:int,transforms:str):
+def get_datamodule(name_dataset:str,batch_size:int,transform_fn:str):
 
     if isinstance(name_dataset,str):
         name_dataset=Dataset[name_dataset.lower()]
-    
-    transform_fn=get_transform_function(transforms)
-    
+ 
     if name_dataset==Dataset.grocerydataset:
         
         dm=GroceryStoreDataModule(data_dir="data",
                                   batch_size=batch_size,
-                                  transform_fn=transform_fn)
+                                  transform_fn=transform_fn,
+                                  )
         
     elif name_dataset==Dataset.fgvcaircraft:
         dm=FGVCAircraft(transform_fn=transform_fn,
-            data_dir="data",
+                        data_dir="data",
                         batch_size=batch_size,
                         )
-    
     else: 
         raise ("choice a correct dataset")
     dm.prepare_data()   
+    dm.setup()
     return dm
 
 

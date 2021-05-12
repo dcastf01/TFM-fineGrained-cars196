@@ -8,11 +8,11 @@ from torchvision.datasets.folder import default_loader
 import albumentations as A
 from torchvision import transforms
 class Loader(Dataset):
-    def __init__(self,df:pd.DataFrame,transform_fn) -> None:
+    def __init__(self,df:pd.DataFrame,transform_fn,input_size) -> None:
         super().__init__()
         
         self.data=df
-        
+        self.input_size=input_size
         self.loader=default_loader        
         self.transform=transform_fn
 
@@ -36,6 +36,7 @@ class GroceryStoreLoader(Loader):
     
     def __init__(self,
                  transform_fn,
+                 input_size,
                  root_dir:str=os.path.join("data","GroceryStoreDataset"),
                  hierarchylevel:int=2,
                  split:str="train",
@@ -59,7 +60,8 @@ class GroceryStoreLoader(Loader):
 
         df=pd.read_csv(file_with_images,delimiter="," )
         super().__init__(df,
-                         transform_fn=transform_fn)
+                         transform_fn=transform_fn,
+                         input_size=input_size)
         
     
     def __getitem__(self, index):
@@ -78,6 +80,7 @@ class FGVCAircraftLoader(Loader):
     
     def __init__(self,
                  transform_fn,
+                 input_size,
                  root_dir:str="data",
                  hierarchylevel:int=2,
                  split:str="train",
@@ -95,7 +98,8 @@ class FGVCAircraftLoader(Loader):
         df=self.create_df_from_txts()
         
         super().__init__(df,
-                         transform_fn=transform_fn)
+                         transform_fn=transform_fn,
+                         input_size=input_size)
         
     def create_df_from_txts(self) ->pd.DataFrame:
         root_all_txt="images"

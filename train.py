@@ -15,7 +15,7 @@ from pytorch_lightning.plugins import DDPPlugin
 
 from config import CONFIG,create_config_dict
 
-from builders import get_datamodule,get_system
+from builders import get_datamodule,get_system, get_transform_function
 from autotune import autotune_lr
 def main():
     logging.info("empezando setup del experimento")
@@ -37,11 +37,15 @@ def main():
         #offline=True,
                 )
     config=wandb.config
+    #get transform_fn
     
+    transfrom_fn=get_transform_function(config.transform_name,
+                                        config.IMG_SIZE)
     #get datamodule
     dm=get_datamodule(config.dataset_name,
                       config.batch_size,
-                      config.transform_name)
+                      transfrom_fn
+                      )
     #callbacks
     early_stopping=EarlyStopping(monitor='_val_loss_total',
                                  mode="min",
@@ -69,7 +73,7 @@ def main():
     
     trainer=pl.Trainer(
                     logger=wandb_logger,
-                       gpus=[0],
+                       gpus=[1],
                        max_epochs=config.NUM_EPOCHS,
                        precision=config.precision_compute,
                     #    limit_train_batches=0.1, #only to debug
@@ -93,7 +97,7 @@ def main():
     model=autotune_lr(trainer,model,dm,get_auto_lr=config.AUTO_LR)
 
     logging.info("empezando el entrenamiento")
-    trainer.fit(model,dm)
+    trainer.fit(model,datamodule=dm)
     
     
 if __name__=="__main__":

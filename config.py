@@ -37,10 +37,10 @@ class CONFIG(object):
     DEVICE: str = "cuda" if torch.cuda.is_available() else "cpu"
     # TRAIN_DIR = "data/train"
     # VAL_DIR = "data/val"
-    batch_size:int =150
+    batch_size:int =128
     dataset=Dataset.fgvcaircraft
     dataset_name:str=dataset.name
-    precision_compute:int=16
+    precision_compute:int=32
     
     optim=Optim.adam
     optim_name:str=optim.name

@@ -3,20 +3,28 @@ from loaders import GroceryStoreLoader
 import os
 from torch.utils.data import DataLoader
 from config import CONFIG
+from template_data_module import TemplateDataModule
 
-class GroceryStoreDataModule(pl.LightningDataModule):
+
+class GroceryStoreDataModule(TemplateDataModule):
     def __init__(self,
                  transform_fn,
                  data_dir: str = "data",
                  batch_size: int = 32):
-        super().__init__()
         
         self.transform_fn=transform_fn
-        self.data_dir = os.path.join(data_dir,"GroceryStoreDataset")
+        data_dir = os.path.join(data_dir,"GroceryStoreDataset")
         self.batch_size = batch_size
-        self.classlevel={'level0':43 ,
+        classlevel={'level0':43 ,
                         'level00': 82,  #extraer esta variable del dataset más adelante
                             }
+        super().__init__(
+            transform_fn=transform_fn,
+            data_dir=data_dir,
+            batch_size=batch_size,
+            classlevel=classlevel
+            
+                        )
     def prepare_data(self):
         # manual download from 
         #https://github.com/marcusklasson/GroceryStoreDataset
