@@ -40,7 +40,8 @@ def main():
     
     #get datamodule
     dm=get_datamodule(config.dataset_name,
-                      config.batch_size)
+                      config.batch_size,
+                      config.transform_name)
     #callbacks
     early_stopping=EarlyStopping(monitor='_val_loss_total',
                                 patience=5,

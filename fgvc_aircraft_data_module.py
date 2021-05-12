@@ -8,12 +8,14 @@ from torchvision.datasets.folder import default_loader
 from loaders import FGVCAircraftLoader
 from config import CONFIG
 class FGVCAircraft(pl.LightningDataModule):
-    def __init__(self,data_dir: str = "data", batch_size: int = 32):
+    def __init__(self,
+                 transform_fn,
+                 data_dir: str = "data", batch_size: int = 32):
         super().__init__()
         self.data_dir = data_dir
         self.batch_size = batch_size
         self.root=data_dir
-        
+        self.transform_fn=transform_fn
         self.url = 'http://www.robots.ox.ac.uk/~vgg/data/fgvc-aircraft/archives/fgvc-aircraft-2013b.tar.gz'
         self.class_types = ('variant', 'family', 'manufacturer')
         self.splits = ('train', 'val', 'trainval', 'test')
@@ -36,9 +38,12 @@ class FGVCAircraft(pl.LightningDataModule):
             self.download()
 
     def setup(self, stage=None):
-        self.FGVCaircraft_train = FGVCAircraftLoader(self.data_dir, split="train")
-        self.FGVCaircraft_val= FGVCAircraftLoader(self.data_dir, split="val")
-        self.FGVCaircraft_test = FGVCAircraftLoader(self.data_dir, split="test")
+        self.FGVCaircraft_train = FGVCAircraftLoader(self.transform_fn,
+                                                     self.data_dir, split="train")
+        self.FGVCaircraft_val= FGVCAircraftLoader(self.transform_fn,
+                                                  self.data_dir, split="val")
+        self.FGVCaircraft_test = FGVCAircraftLoader(self.transform_fn,
+                                                    self.data_dir, split="test")
 
     def train_dataloader(self):
         return DataLoader(self.FGVCaircraft_train, batch_size=self.batch_size,

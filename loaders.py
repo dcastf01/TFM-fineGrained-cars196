@@ -6,7 +6,6 @@ import torch
 from torch.utils.data import Dataset
 from torchvision.datasets.folder import default_loader
 import albumentations as A
-from factory_augmentations import basic_transform,transforms_imagenet_train,transforms_noaug_train
 from torchvision import transforms
 class Loader(Dataset):
     def __init__(self,df:pd.DataFrame,transform_fn) -> None:
@@ -36,10 +35,11 @@ class Loader(Dataset):
 class GroceryStoreLoader(Loader):
     
     def __init__(self,
+                 transform_fn,
                  root_dir:str=os.path.join("data","GroceryStoreDataset"),
                  hierarchylevel:int=2,
                  split:str="train",
-                 transform_fn=transforms_noaug_train) -> None:
+                 ) -> None:
         
         
         self.root_dir=os.path.join(root_dir,"dataset")
@@ -77,10 +77,11 @@ class GroceryStoreLoader(Loader):
 class FGVCAircraftLoader(Loader):
     
     def __init__(self,
+                 transform_fn,
                  root_dir:str="data",
                  hierarchylevel:int=2,
                  split:str="train",
-                 transform_fn=transforms_noaug_train
+                 
                  ) -> None:
         
         

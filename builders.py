@@ -35,9 +35,10 @@ def get_datamodule(name_dataset:str,batch_size:int,transforms:str):
                                   transform_fn=transform_fn)
         
     elif name_dataset==Dataset.fgvcaircraft:
-        dm=FGVCAircraft(data_dir="data",
+        dm=FGVCAircraft(transform_fn=transform_fn,
+            data_dir="data",
                         batch_size=batch_size,
-                        transform_fn=transform_fn)
+                        )
     
     else: 
         raise ("choice a correct dataset")

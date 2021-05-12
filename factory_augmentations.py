@@ -3,9 +3,8 @@ from albumentations.pytorch import ToTensorV2
 from timm.data.constants import IMAGENET_DEFAULT_MEAN,IMAGENET_DEFAULT_STD
 from timm.data.transforms_factory import transforms_noaug_train,transforms_imagenet_train
 
-from config import CONFIG
 
-def basic_transforms(img_size:int=CONFIG.IMG_SIZE):
+def basic_transforms(img_size:int=224):
     basic_transform=A.Compose(
             [
                 A.Resize(img_size,img_size),

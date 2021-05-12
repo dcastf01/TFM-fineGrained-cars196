@@ -5,8 +5,13 @@ from torch.utils.data import DataLoader
 from config import CONFIG
 
 class GroceryStoreDataModule(pl.LightningDataModule):
-    def __init__(self,data_dir: str = "data", batch_size: int = 32):
+    def __init__(self,
+                 transform_fn,
+                 data_dir: str = "data",
+                 batch_size: int = 32):
         super().__init__()
+        
+        self.transform_fn=transform_fn
         self.data_dir = os.path.join(data_dir,"GroceryStoreDataset")
         self.batch_size = batch_size
         self.classlevel={'level0':43 ,
@@ -19,9 +24,12 @@ class GroceryStoreDataModule(pl.LightningDataModule):
         
 
     def setup(self, stage=None):
-        self.grocery_store_train = GroceryStoreLoader(self.data_dir, split="train")
-        self.grocery_store_val= GroceryStoreLoader(self.data_dir, split="val")
-        self.grocery_store_test = GroceryStoreLoader(self.data_dir, split="test")
+        self.grocery_store_train = GroceryStoreLoader(self.transform_fn,
+                                                      self.data_dir, split="train")
+        self.grocery_store_val= GroceryStoreLoader(self.transform_fn,
+                                                   self.data_dir, split="val")
+        self.grocery_store_test = GroceryStoreLoader(self.transform_fn,
+                                                     self.data_dir, split="test")
 
     def train_dataloader(self):
         return DataLoader(self.grocery_store_train, batch_size=self.batch_size,
