@@ -3,12 +3,23 @@ from config import Dataset,ModelsAvailable,TransformsAvailable
 from grocery_store_data_module import GroceryStoreDataModule
 from fgvc_aircraft_data_module import FGVCAircraft
 from lit_hierarchy_transformers import LitHierarchyTransformers
-
+from factory_augmentations import basic_transforms,transforms_imagenet_train,transforms_noaug_train
 from lit_vit import LitVIT
 
 import pytorch_lightning as pl
 def get_transform_function(transforms:str):
-    return TransformsAvailable[transforms.lower()]
+    name_transform=TransformsAvailable[transforms.lower()]
+    
+    if name_transform==TransformsAvailable.basic_transforms:
+        transform_fn=basic_transforms()
+    elif name_transform==TransformsAvailable.timm_transforms_imagenet_train:
+        transform_fn=transforms_imagenet_train()
+        
+    elif name_transform==TransformsAvailable.timm_noaug:
+        transform_fn=transforms_noaug_train()
+        
+        
+    return transform_fn
     
 def get_datamodule(name_dataset:str,batch_size:int,transforms:str):
 

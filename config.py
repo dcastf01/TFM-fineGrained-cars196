@@ -22,7 +22,7 @@ class Optim(Enum):
 class TransformsAvailable(Enum):
     basic_transforms=1
     timm_noaug=2
-    transforms_imagenet_train=3
+    timm_transforms_imagenet_train=3
     
     
 @dataclass
@@ -37,7 +37,7 @@ class CONFIG(object):
     DEVICE: str = "cuda" if torch.cuda.is_available() else "cpu"
     # TRAIN_DIR = "data/train"
     # VAL_DIR = "data/val"
-    batch_size:int =128
+    batch_size:int =1024
     dataset=Dataset.fgvcaircraft
     dataset_name:str=dataset.name
     precision_compute:int=16

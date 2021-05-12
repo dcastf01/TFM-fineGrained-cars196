@@ -1,0 +1,21 @@
+method: bayes
+name: values_prefix
+metric:
+  goal: minimize
+  name: _val_loss_total
+parameters:
+  PRETRAINED_MODEL:
+    distribution: categorical
+    values:
+    - "true"
+    - "false"
+  batch_size:
+    values: values: [5,32,64,128,256,512]
+  lr:
+    lr:
+    values: [0.0001,0.0005,0.001,0.005,0.01,0.05,0.1,0.5,1,]
+  precision_compute:
+    values:
+    - 16
+    - 32
+program: train.py
