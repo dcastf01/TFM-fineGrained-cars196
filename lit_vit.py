@@ -17,7 +17,14 @@ class LitVIT(LitSystem):
         num_classes=class_level["level000"]
         #puede que loss_fn no vaya aquí y aquí solo vaya modelo
         model_name="vit_base_patch16_224_in21k"
-        self.model=timm.create_model(model_name,pretrained=True)
+        extras=dict(
+            img_size=448
+        )
+        self.model=timm.create_model(model_name,pretrained=True,**extras)
+        
+        #test
+        
+        
         self.model.head = nn.Linear(self.model.head.in_features, num_classes)
          #Model
          #Released year
@@ -81,3 +88,6 @@ class LitVIT(LitSystem):
             sum_by_batch=torch.sum(preds000_probability,dim=1)
             logging.error("la suma de las predicciones da distintos de 1, procedemos a imprimir el primer elemento")
             print(sum_by_batch)
+            
+            
+            

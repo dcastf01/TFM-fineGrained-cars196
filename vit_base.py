@@ -32,6 +32,7 @@ class ViTBase16(nn.Module):
         def __init__(self,num_classes=20):
                 super(ViTBase16,self).__init__()
                 model_name="vit_base_patch16_224_in21k"
+                
                 self.model=timm.create_model(model_name,pretrained=True)
                 self.model.head = nn.Linear(self.model.head.in_features, num_classes)
                 self.model.forward=self.forward
