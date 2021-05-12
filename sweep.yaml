@@ -12,7 +12,6 @@ parameters:
   batch_size:
     values: values: [5,32,64,128,256,512]
   lr:
-    lr:
     values: [0.0001,0.0005,0.001,0.005,0.01,0.05,0.1,0.5,1,]
   precision_compute:
     values:

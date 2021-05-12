@@ -44,10 +44,10 @@ class CONFIG(object):
     
     optim=Optim.adam
     optim_name:str=optim.name
-    transform=TransformsAvailable.timm_noaug
+    transform=TransformsAvailable.basic_transforms
     transform_name:str=transform.name
     
-    lr:float = 1e-3
+    lr:float = 0.001
     AUTO_LR :bool= False
     # LAMBDA_IDENTITY = 0.0
     NUM_WORKERS:int = 3

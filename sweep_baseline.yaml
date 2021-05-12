@@ -1,0 +1,31 @@
+program: train.py
+name: baseline_vit_fgvcaircraft
+method: bayes
+metric:
+  goal: minimize
+  name: _valid_level000Accuracy
+parameters:
+  transform_name:
+    values:
+      - basic_transforms
+      - timm_noaug
+      - timm_transforms_imagenet_train 
+  experiment_name:
+    value: vitbaseline
+  dataset_name:
+    value: fgvcaircraft
+  optim_name:
+    value: adam
+  batch_size:
+    value: 150
+
+  NUM_EPOCHS:
+    value: 100
+  lr:
+    max: 0.001
+    min: 0.00005
+    distribution: uniform
+
+early_terminate:
+  min_iter: 5
+  type: hyperband
