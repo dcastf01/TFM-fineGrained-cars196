@@ -17,6 +17,7 @@ from config import CONFIG,create_config_dict
 
 from builders import get_datamodule,get_system, get_transform_function
 from autotune import autotune_lr
+
 def main():
     logging.info("empezando setup del experimento")
     torch.backends.cudnn.benchmark = True
@@ -89,10 +90,11 @@ def main():
                     #    accelerator="dpp",
                     #    plugins=DDPPlugin(find_unused_parameters=False),
                        callbacks=[
-                            early_stopping ,
+                            # early_stopping ,
+                            
                             # checkpoint_callback,
                             # confusion_matrix_wandb,
-                            # learning_rate_monitor 
+                            learning_rate_monitor 
                                   ],
                        progress_bar_refresh_rate=5,
                        )

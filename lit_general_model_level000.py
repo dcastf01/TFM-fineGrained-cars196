@@ -6,29 +6,22 @@ import pytorch_lightning as pl
 from lit_system import LitSystem
 import timm
 import logging
-class LitVIT(LitSystem):
+from config import ModelsAvailable
+class LitGeneralModellevel000(LitSystem):
     def __init__(self,
+                 model_name:ModelsAvailable,
                  class_level:dict,
                  optim:str,
                  lr:float,
                  img_size:int
                   ):
         
+            
         super().__init__(lr,optim)
         num_classes=class_level["level000"]
         #puede que loss_fn no vaya aquí y aquí solo vaya modelo
+        self.model=self.create_model(model_name,img_size,num_classes)
         model_name="vit_base_patch16_224_in21k"
-        extras=dict(
-            img_size=img_size
-        )
-        self.model=timm.create_model(model_name,pretrained=True,**extras)
-        
-        #test
-        
-        
-        self.model.head = nn.Linear(self.model.head.in_features, num_classes)
-         #Model
-         #Released year
                 
         self.criterion=F.cross_entropy
 
@@ -92,3 +85,18 @@ class LitVIT(LitSystem):
             
             
             
+    def create_model(self,model_chosen:ModelsAvailable,img_size,num_classes):
+            
+            
+            extras=dict(
+                img_size=img_size
+                )
+            
+            model=timm.create_model(model_chosen.value,pretrained=True,**extras)
+            a=model_chosen.name[0:3]
+            if model_chosen== ModelsAvailable.vitbaseline or model_chosen==ModelsAvailable.vit_large_patch16_224_in21k:
+                model.head=nn.Linear(model.head.in_features, num_classes)
+                
+            elif model_chosen==ModelsAvailable.resnest50:
+                model.fc=nn.Linear(model.fc.in_features,num_classes)
+            return model

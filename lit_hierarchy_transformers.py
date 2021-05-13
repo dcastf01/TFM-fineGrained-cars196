@@ -15,7 +15,7 @@ class LitHierarchyTransformers(LitSystem):
                 img_size,
                   ):
         
-        super().__init__(lr,optim)
+        super().__init__(class_level,lr,optim)
         
         #puede que loss_fn no vaya aquí y aquí solo vaya modelo
         
@@ -34,50 +34,44 @@ class LitHierarchyTransformers(LitSystem):
 
     def training_step(self,batch,batch_idx):
         x,targets=batch
-        target0,target00,target000=targets
-        y0,y00,y000=self.HierarchicalTransformers(x)
-        loss0=self.criterion(y0,target0)
-        loss00=self.criterion(y00,target00)
-        loss000=self.criterion(y000,target000)
+        predictions:dict=self.HierarchicalTransformers(x)
+        loss={}
+        metrics={}
+        
+        for (level, y_pred),y_true in zip(predictions.items(),targets):
+                loss[level]=self.criterion(y_pred,y_true)
+                preds_probability=y_pred.softmax(dim=1)
+                metrics[level]=self.train_metrics_base[level](preds_probability,y_true)
+                
+        loss_total=sum(loss.values())
+        data_dict={
+                "loss_total":loss_total,
+                **loss,
+                **dict(ele for sub in metrics.values() for ele in sub.items()) #remove top level from dictionary
+                }
 
-        loss_total=loss0+loss00+loss000
-        
-        preds0_probability=y0.softmax(dim=1)
-        preds00_probability=y00.softmax(dim=1)
-        preds000_probability=y000.softmax(dim=1)
-        
-        metric_value0=self.train_metrics_base0(preds0_probability,target0)
-        metric_value00=self.train_metrics_base00(preds00_probability,target00)
-        metric_value000=self.train_metrics_base000(preds000_probability,target000)
-        
-        data_dict={"loss0":loss0,"loss00":loss00,"loss000":loss000,
-                   "loss_total":loss_total,
-                   **metric_value0,**metric_value00,**metric_value000}
-        
         self.insert_each_metric_value_into_dict(data_dict,prefix="")
         return loss_total
     
     def validation_step(self, batch, batch_idx):
         '''used for logging metrics'''
         x,targets=batch
-        target0,target00,target000=targets
-        y0,y00,y000=self.HierarchicalTransformers(x)
-        loss0=self.criterion(y0,target0)
-        loss00=self.criterion(y00,target00)
-        loss000=self.criterion(y000,target000)
+        predictions:dict=self.HierarchicalTransformers(x)
+        loss={}
+        metrics={}
+        
+        for (level, y_pred),y_true in zip(predictions.items(),targets):
+                loss["_val_loss"+level[5:]]=self.criterion(y_pred,y_true)
+                preds_probability=y_pred.softmax(dim=1)
+                metrics[level]=self.valid_metrics_base[level](preds_probability,y_true)
+                
+        loss_total=sum(loss.values())
+        data_dict={
+                "_val_loss_total":loss_total,
+                **loss,
+                **dict(ele for sub in metrics.values() for ele in sub.items()) #remove top level from dictionary
+                }
 
-        loss_total=loss0+loss00+loss000
-        
-        preds0_probability=y0.softmax(dim=1)
-        preds00_probability=y00.softmax(dim=1)
-        preds000_probability=y000.softmax(dim=1)
-        metric_value0=self.valid_metrics_base0(preds0_probability,target0)
-        metric_value00=self.valid_metrics_base00(preds00_probability,target00)
-        metric_value000=self.valid_metrics_base000(preds000_probability,target000)
-        data_dict={"val_loss0":loss0,"val_loss00":loss00, "val_loss000":loss000,
-                   "val_loss_total":loss_total,
-                   **metric_value0,**metric_value00,**metric_value000}
-        
         self.insert_each_metric_value_into_dict(data_dict,prefix="")
       
 class HierarchicalTransformers(nn.Module):
@@ -85,36 +79,35 @@ class HierarchicalTransformers(nn.Module):
                      class_level:dict,
                      img_size,
                      ):
-                #ver como hacen lo del block y hacerlo de esa forma
-                class_level0=class_level["level0"]
-                class_level00=class_level["level00"]
-                class_level000=class_level["level000"]
+
                 super(HierarchicalTransformers,self).__init__()
-                self.vit1=ViTBase16(num_classes=class_level0,img_size=img_size)
-                self.vit2=ViTBase16(num_classes=class_level00,img_size=img_size)
-                self.vit3=ViTBase16(num_classes=class_level000,img_size=img_size)
-                ##test
-                # self.vit1(torch.rand(2,3,224,224),
-                #           torch.rand(2,1,768))
+                self.model=ViTBase16(class_level=class_level,img_size=img_size)
                 
         def forward(self, x):
-                y0,x0=self.vit1(x)
-                y00,x00=self.vit2(x,x0)
-                y000,x000=self.vit3(x,x00)
-                
-                return y0,y00,y000
-      
+                return self.model(x)
+   
 class ViTBase16(nn.Module):
 
         
-        def __init__(self,num_classes,img_size):
+        def __init__(self,class_level:dict,img_size:int):
+                
                 super(ViTBase16,self).__init__()
+                self.num_layers_out=len(class_level)
+                
                 model_name="vit_base_patch16_224_in21k"
                 extras=dict(
                     img_size=img_size
                 )   
                 self.model=timm.create_model(model_name,pretrained=True,**extras)
-                self.model.head = nn.Linear(self.model.head.in_features, num_classes)
+                
+                self.model.heads=nn.ModuleDict(  {
+                        level:nn.Linear(self.model.head.in_features,num_classes)
+                        
+                        for level,num_classes in class_level.items()
+                })
+                self.model.head=nn.Identity()
+                # self.model.head = nn.Linear(self.model.head.in_features, num_classes)
+                
                 self.model.forward=self.forward
                 self.model.forward_features=self.forward_features
 
@@ -141,5 +134,12 @@ class ViTBase16(nn.Module):
 
         def forward(self, x,extra_tensor=None):
                 x = self.forward_features(x,extra_tensor)
-                y = self.model.head(x)
-                return y,x
+                y={}
+                # prelevel=None
+                for level,head in self.model.heads.items():
+                        y[level]=head(x)
+                #sería un for ya que es dependiente de la jerarquia
+                # y0,x0=self.head0(x,"level0")
+                # y00,x00=self.head00(x,x0)
+                # y000,x000=self.head000(x,x00)
+                return y
