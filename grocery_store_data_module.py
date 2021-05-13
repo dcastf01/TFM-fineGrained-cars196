@@ -9,10 +9,10 @@ from template_data_module import TemplateDataModule
 class GroceryStoreDataModule(TemplateDataModule):
     def __init__(self,
                  transform_fn,
+                 transform_fn_test,
                  data_dir: str = "data",
                  batch_size: int = 32):
         
-        self.transform_fn=transform_fn
         data_dir = os.path.join(data_dir,"GroceryStoreDataset")
         self.batch_size = batch_size
         classlevel={'level0':43 ,
@@ -20,6 +20,7 @@ class GroceryStoreDataModule(TemplateDataModule):
                             }
         super().__init__(
             transform_fn=transform_fn,
+            transform_fn_test=transform_fn_test,
             data_dir=data_dir,
             batch_size=batch_size,
             classlevel=classlevel
@@ -34,9 +35,9 @@ class GroceryStoreDataModule(TemplateDataModule):
     def setup(self, stage=None):
         self.grocery_store_train = GroceryStoreLoader(self.transform_fn,
                                                       self.data_dir, split="train")
-        self.grocery_store_val= GroceryStoreLoader(self.transform_fn,
+        self.grocery_store_val= GroceryStoreLoader(self.transform_fn_test,
                                                    self.data_dir, split="val")
-        self.grocery_store_test = GroceryStoreLoader(self.transform_fn,
+        self.grocery_store_test = GroceryStoreLoader(self.transform_fn_test,
                                                      self.data_dir, split="test")
 
     def train_dataloader(self):
