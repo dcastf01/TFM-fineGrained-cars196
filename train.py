@@ -39,12 +39,13 @@ def main():
     config=wandb.config
     #get transform_fn
     
-    transfrom_fn=get_transform_function(config.transform_name,
+    transfrom_fn,transform_fn_test=get_transform_function(config.transform_name,
                                         config.IMG_SIZE)
     #get datamodule
     dm=get_datamodule(config.dataset_name,
                       config.batch_size,
-                      transfrom_fn
+                      transfrom_fn,
+                      transform_fn_test
                       )
     #callbacks
     early_stopping=EarlyStopping(monitor='_val_loss_total',
@@ -68,12 +69,14 @@ def main():
     model=get_system(dm,
                      config.experiment_name,
                      config.optim_name,
-                     config.lr)
+                     config.lr,
+                     config.IMG_SIZE
+                     )
     #create trainer
     
     trainer=pl.Trainer(
                     logger=wandb_logger,
-                       gpus=[1],
+                       gpus=[0],
                        max_epochs=config.NUM_EPOCHS,
                        precision=config.precision_compute,
                     #    limit_train_batches=0.1, #only to debug
