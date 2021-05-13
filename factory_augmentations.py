@@ -1,7 +1,7 @@
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 from timm.data.constants import IMAGENET_DEFAULT_MEAN,IMAGENET_DEFAULT_STD
-from timm.data.transforms_factory import transforms_noaug_train,transforms_imagenet_train
+from timm.data.transforms_factory import transforms_noaug_train,transforms_imagenet_train,transforms_imagenet_eval
 
 
 def basic_transforms(img_size:int=224):

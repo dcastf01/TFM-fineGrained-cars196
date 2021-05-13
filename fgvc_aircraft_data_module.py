@@ -10,6 +10,7 @@ from template_data_module import TemplateDataModule
 class FGVCAircraft(TemplateDataModule):
     def __init__(self,
                  transform_fn,
+                 transform_fn_test,
                  data_dir: str = "data",
                 batch_size: int = 32,
                  ):
@@ -26,6 +27,7 @@ class FGVCAircraft(TemplateDataModule):
         
         super().__init__(
             transform_fn=transform_fn,
+            transform_fn_test=transform_fn_test,
             data_dir=data_dir,
             batch_size=batch_size,
             classlevel=classlevel
@@ -43,9 +45,9 @@ class FGVCAircraft(TemplateDataModule):
     def setup(self, stage=None):
         self.FGVCaircraft_train = FGVCAircraftLoader(self.transform_fn,
                                                      self.data_dir, split="train")
-        self.FGVCaircraft_val= FGVCAircraftLoader(self.transform_fn,
+        self.FGVCaircraft_val= FGVCAircraftLoader(self.transform_fn_test,
                                                   self.data_dir, split="val")
-        self.FGVCaircraft_test = FGVCAircraftLoader(self.transform_fn,
+        self.FGVCaircraft_test = FGVCAircraftLoader(self.transform_fn_test,
                                                     self.data_dir, split="test")
 
     def train_dataloader(self):

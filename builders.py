@@ -3,7 +3,7 @@ from config import Dataset,ModelsAvailable,TransformsAvailable
 from grocery_store_data_module import GroceryStoreDataModule
 from fgvc_aircraft_data_module import FGVCAircraft
 from lit_hierarchy_transformers import LitHierarchyTransformers
-from factory_augmentations import basic_transforms,transforms_imagenet_train,transforms_noaug_train
+from factory_augmentations import basic_transforms,transforms_imagenet_train,transforms_noaug_train,transforms_imagenet_eval
 from lit_vit import LitVIT
 
 import pytorch_lightning as pl
@@ -13,14 +13,16 @@ def get_transform_function(transforms:str,img_size:int):
     if name_transform==TransformsAvailable.basic_transforms:
         transform_fn=basic_transforms(img_size=img_size)
     elif name_transform==TransformsAvailable.timm_transforms_imagenet_train:
-        transform_fn=transforms_imagenet_train(img_size=img_size)
+        transform_fn=transforms_imagenet_train(img_size=img_size,interpolation="bilinear")
         
     elif name_transform==TransformsAvailable.timm_noaug:
         transform_fn=transforms_noaug_train(img_size=img_size)
-     
-    return transform_fn
+        
+    #el transforms_magenet aplica un center crop de 0.875 el paper que estoy mirnado no lo usa
+    transform_fn_test= transforms_imagenet_eval(img_size=img_size) 
+    return transform_fn,transform_fn_test
     
-def get_datamodule(name_dataset:str,batch_size:int,transform_fn:str):
+def get_datamodule(name_dataset:str,batch_size:int,transform_fn,transform_fn_test):
 
     if isinstance(name_dataset,str):
         name_dataset=Dataset[name_dataset.lower()]
@@ -30,10 +32,12 @@ def get_datamodule(name_dataset:str,batch_size:int,transform_fn:str):
         dm=GroceryStoreDataModule(data_dir="data",
                                   batch_size=batch_size,
                                   transform_fn=transform_fn,
+                                  transform_fn_test=transform_fn_test,
                                   )
         
     elif name_dataset==Dataset.fgvcaircraft:
         dm=FGVCAircraft(transform_fn=transform_fn,
+                        transform_fn_test=transform_fn_test,
                         data_dir="data",
                         batch_size=batch_size,
                         )
@@ -44,13 +48,18 @@ def get_datamodule(name_dataset:str,batch_size:int,transform_fn:str):
     return dm
 
 
-def get_system(datamodule:pl.LightningDataModule,model_choice:str,optim:str,lr:float):
+def get_system(datamodule:pl.LightningDataModule,
+               model_choice:str,
+               optim:str,
+               lr:float,
+               img_size:int,
+               ):
     if isinstance(model_choice,str):
         model_choice=ModelsAvailable[model_choice.lower()]
     if model_choice==ModelsAvailable.hierarchicaltransformers:
-        model=LitHierarchyTransformers(datamodule.classlevel,optim,lr)
+        model=LitHierarchyTransformers(datamodule.classlevel,optim,lr,img_size)
     elif model_choice==ModelsAvailable.vitbaseline:
-        model=LitVIT(datamodule.classlevel,optim,lr)
+        model=LitVIT(datamodule.classlevel,optim,lr,img_size)
         
     else:
         raise("choise a correct model")
