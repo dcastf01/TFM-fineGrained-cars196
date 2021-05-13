@@ -9,8 +9,9 @@ import logging
 class LitVIT(LitSystem):
     def __init__(self,
                  class_level:dict,
-                 optim,
-                 lr
+                 optim:str,
+                 lr:float,
+                 img_size:int
                   ):
         
         super().__init__(lr,optim)
@@ -18,7 +19,7 @@ class LitVIT(LitSystem):
         #puede que loss_fn no vaya aquí y aquí solo vaya modelo
         model_name="vit_base_patch16_224_in21k"
         extras=dict(
-            img_size=448
+            img_size=img_size
         )
         self.model=timm.create_model(model_name,pretrained=True,**extras)
         
