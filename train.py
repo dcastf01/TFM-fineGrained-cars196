@@ -24,14 +24,15 @@ def main():
     config=CONFIG()
     config_dict=create_config_dict(config)
     wandb.init(
-            project="Hierarchy-label-transformers",
+            project="Hierarchical-label-transformers",
             entity='dcastf01',
                             
             config=config_dict
                 )
     wandb.run.name=config.experiment_name+" "+\
                     datetime.datetime.utcnow().strftime("%Y-%m-%d %X")
-
+                    
+    wandb.run.notes=config.notes
     # wandb.run.save()
     
     wandb_logger=WandbLogger(
@@ -77,7 +78,7 @@ def main():
     
     trainer=pl.Trainer(
                     logger=wandb_logger,
-                       gpus=[0],
+                       gpus=[0,1],
                        max_epochs=config.NUM_EPOCHS,
                        precision=config.precision_compute,
                     #    limit_train_batches=0.1, #only to debug
@@ -86,9 +87,9 @@ def main():
                         auto_lr_find=config.AUTO_LR,
 
                        log_gpu_memory=True,
-                    #    distributed_backend='ddp',
-                    #    accelerator="dpp",
-                    #    plugins=DDPPlugin(find_unused_parameters=False),
+                       distributed_backend='ddp',
+                       accelerator="dpp",
+                       plugins=DDPPlugin(find_unused_parameters=False),
                        callbacks=[
                             early_stopping ,
 
@@ -97,6 +98,7 @@ def main():
                             learning_rate_monitor 
                                   ],
                        progress_bar_refresh_rate=5,
+                       
                        )
     
     model=autotune_lr(trainer,model,dm,get_auto_lr=config.AUTO_LR)

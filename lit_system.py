@@ -16,23 +16,12 @@ class LitSystem(pl.LightningModule):
         super().__init__()
 
         # metrics_base=
-        level="0"
         self.train_metrics_base=nn.ModuleDict()
         self.valid_metrics_base=nn.ModuleDict()
-        for _ in range(len(class_level)):
-            self.train_metrics_base["level"+level]=get_metrics_collections_base(prefix="train_level"+level)
-            self.valid_metrics_base["level"+level]=get_metrics_collections_base(prefix="valid_level"+level)
-            level+="0"
+        for key in class_level.keys():
+            self.train_metrics_base[key]=get_metrics_collections_base(prefix="train_"+key)
+            self.valid_metrics_base[key]=get_metrics_collections_base(prefix="valid_"+key)
 
-            
-        
-        # self.train_metrics_base0=metrics_base.clone(prefix="train_level0")
-        # self.valid_metrics_base0=metrics_base.clone(prefix="valid_level0")
-        # self.train_metrics_base00=metrics_base.clone(prefix="train_level00")
-        # self.valid_metrics_base00=metrics_base.clone(prefix="valid_level00")
-        # self.train_metrics_base000=metrics_base.clone(prefix="train_level000")
-        # self.valid_metrics_base000=metrics_base.clone(prefix="valid_level000")
-        
         # log hyperparameters
         self.save_hyperparameters()    
         self.lr=lr
