@@ -39,19 +39,19 @@ class LitGeneralModellevel0(LitSystem):
 
         loss_total=loss0
         
-        preds000_probability=y0.softmax(dim=1)
+        preds0_probability=y0.softmax(dim=1)
         try:
-            metric_value000=self.train_metrics_base["level0"](preds000_probability,target0)
+            metric_value0=self.train_metrics_base["level0"](preds0_probability,target0)
             
             data_dict={"loss0":loss0,
                     "loss_total":loss_total,
-                        **metric_value000}
+                        **metric_value0}
             
             
             self.insert_each_metric_value_into_dict(data_dict,prefix="")
         except Exception as e:
             print(e)
-            sum_by_batch=torch.sum(preds000_probability,dim=1)
+            sum_by_batch=torch.sum(preds0_probability,dim=1)
             logging.error("la suma de las predicciones da distintos de 1, procedemos a imprimir el primer elemento")
             print(sum_by_batch)
             print(e)
@@ -69,17 +69,18 @@ class LitGeneralModellevel0(LitSystem):
 
         loss_total=loss0
         
-        preds000_probability=y0.softmax(dim=1)
+        preds0_probability=y0.softmax(dim=1)
         try:
-            metric_value000=self.valid_metrics_base["level0"](preds000_probability,target0)
-            data_dict={ "val_loss000":loss0,
+            metric_value0=self.valid_metrics_base["level0"](preds0_probability,target0)
+            data_dict={ "val_loss0":loss0,
                     "val_loss_total":loss_total,
-                    **metric_value000}
+                    **metric_value0}
         
             self.insert_each_metric_value_into_dict(data_dict,prefix="")
             
-        except:
-            sum_by_batch=torch.sum(preds000_probability,dim=1)
+        except Exception as e:
+            print(e)
+            sum_by_batch=torch.sum(preds0_probability,dim=1)
             logging.error("la suma de las predicciones da distintos de 1, procedemos a imprimir el primer elemento")
             print(sum_by_batch)
             
@@ -96,7 +97,7 @@ class LitGeneralModellevel0(LitSystem):
                 
                 model=timm.create_model(model_chosen.value,pretrained=True,**extras)
                 model.head=nn.Linear(model.head.in_features, num_classes)
-            elif model_chosen==ModelsAvailable.resnest50:
+            elif model_chosen==ModelsAvailable.resnet50:
                 
                 model=timm.create_model(model_chosen.value,pretrained=True)
                 model.fc=nn.Linear(model.fc.in_features,num_classes)
