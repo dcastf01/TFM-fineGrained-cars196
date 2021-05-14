@@ -45,8 +45,8 @@ class GroceryStoreLoader(Loader):
         
         self.root_dir=os.path.join(root_dir,"dataset")
         self.split=split
-        self.num_class_level0=43
-        self.num_class_level00=81
+        self.num_class_level00=43
+        self.num_class_level0=81
         
 
         if self.split=="train":
@@ -69,8 +69,8 @@ class GroceryStoreLoader(Loader):
         img_path=os.path.join(self.root_dir,self.data.iloc[index,0])
         img=self.loader(img_path)
  
-        label_level0=torch.tensor(int(self.data.iloc[index,1]))
-        label_level00=torch.tensor(int(self.data.iloc[index,2]))
+        label_level00=torch.tensor(int(self.data.iloc[index,1]))
+        label_level0=torch.tensor(int(self.data.iloc[index,2]))
         img=self.apply_transform(img)
         
         return img,(label_level0,label_level00)
@@ -91,9 +91,9 @@ class FGVCAircraftLoader(Loader):
         self.root_dir=os.path.join(root_dir,"fgvc-aircraft-2013b","data")
         self.root_images=os.path.join(self.root_dir,"images")
         self.split=split
-        self.num_class_level0=30
+        self.num_class_level000=30
         self.num_class_level00=70
-        self.num_class_level000=100
+        self.num_class_level0=100
         
         df=self.create_df_from_txts()
         
@@ -104,9 +104,9 @@ class FGVCAircraftLoader(Loader):
     def create_df_from_txts(self) ->pd.DataFrame:
         root_all_txt="images"
         parts={
-                "level0": "manufacturer",
+                "level000": "manufacturer",
                 "level00": "family",
-                "level000": "variant",
+                "level0": "variant",
                     }
         
         assert self.split in ["train","val","test"]
@@ -124,9 +124,9 @@ class FGVCAircraftLoader(Loader):
         
         df = df.loc[:,~df.columns.duplicated()]
         
-        df["label0"]=df.groupby(["level0"]).ngroup()
-        df["label00"]=df.groupby(["level00"]).ngroup()
         df["label000"]=df.groupby(["level000"]).ngroup()
+        df["label00"]=df.groupby(["level00"]).ngroup()
+        df["label0"]=df.groupby(["level0"]).ngroup()
         
         return df
 
@@ -135,9 +135,9 @@ class FGVCAircraftLoader(Loader):
         img_path=os.path.join(self.root_images,self.data.iloc[index,0]+".jpg")
         img=self.loader(img_path)
 
-        label_level0=torch.tensor(int(self.data.iloc[index]["label0"]))
-        label_level00=torch.tensor(int(self.data.iloc[index]["label00"]))
         label_level000=torch.tensor(int(self.data.iloc[index]["label000"]))
+        label_level00=torch.tensor(int(self.data.iloc[index]["label00"]))
+        label_level0=torch.tensor(int(self.data.iloc[index]["label0"]))
         
         img=self.apply_transform(img)
         return img,(label_level0,label_level00,label_level000)
