@@ -90,8 +90,8 @@ def main():
                     #    accelerator="dpp",
                     #    plugins=DDPPlugin(find_unused_parameters=False),
                        callbacks=[
-                            # early_stopping ,
-                            
+                            early_stopping ,
+
                             # checkpoint_callback,
                             # confusion_matrix_wandb,
                             learning_rate_monitor 
