@@ -1,29 +1,40 @@
 program: train.py
-name: baseline_vit_fgvcaircraft_differents_models
+name: baseline_vit_fgvcaircraft_differents_models_differents_lr
 method: bayes
 metric:
-  goal: maximize
-  name: _valid_level000Accuracy
+  goal: minimize
+  name: _val_loss0
 parameters:
   transform_name:
     values:
       - timm_transforms_imagenet_train 
   experiment_name:
-    value: vitbaseline
+    values: 
+      - vit_base_patch16_224_in21k
+      - resnet50
+      - vit_large_patch16_224_in21k
+      - vit_large_patch32_224_in21k
+
   dataset_name:
     value: fgvcaircraft
   optim_name:
     value: adam
   batch_size:
-    value: 100
+    value: 6
   IMG_SIZE:
     value: 448
   NUM_EPOCHS:
     value: 30
   lr:
-    max: 0.0001
+    max: 0.0005
     min: 0.000005
     distribution: uniform
+  gpu0:
+    value: true
+    distribution: constant
+  gpu1:
+    value: true
+    distribution: constant
 
 early_terminate:
   min_iter: 5

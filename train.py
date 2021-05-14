@@ -6,16 +6,13 @@ import pytorch_lightning as pl
 
 import torch
 import wandb
-from pytorch_lightning.callbacks import LearningRateMonitor
-from pytorch_lightning.callbacks.early_stopping import EarlyStopping
-from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
+
 from pytorch_lightning.loggers import WandbLogger
-from pytorch_lightning.plugins import DDPPlugin
 
 
 from config import CONFIG,create_config_dict
 
-from builders import get_datamodule,get_system, get_transform_function
+from builders import get_datamodule,get_system, get_transform_function,get_trainer
 from autotune import autotune_lr
 
 def main():
@@ -29,6 +26,7 @@ def main():
                             
             config=config_dict
                 )
+    config=wandb.config
     wandb.run.name=config.experiment_name+" "+\
                     datetime.datetime.utcnow().strftime("%Y-%m-%d %X")
                     
@@ -38,7 +36,7 @@ def main():
     wandb_logger=WandbLogger(
         #offline=True,
                 )
-    config=wandb.config
+    
     #get transform_fn
     
     transfrom_fn,transform_fn_test=get_transform_function(config.transform_name,
@@ -49,23 +47,7 @@ def main():
                       transfrom_fn,
                       transform_fn_test
                       )
-    #callbacks
-    early_stopping=EarlyStopping(monitor='_val_loss_total',
-                                 mode="min",
-                                patience=5,
-                                 verbose=True,
-                                 check_finite =True
-                                 )
-
-    checkpoint_callback = ModelCheckpoint(
-        monitor='_val_loss_total',
-        dirpath=config.PATH_CHECKPOINT,
-        filename= '-{epoch:02d}-{val_loss:.6f}',
-        mode="min",
-        save_last=True,
-        save_top_k=3,
-                        )
-    learning_rate_monitor=LearningRateMonitor(logging_interval="epoch")
+    
 
     #get system
     model=get_system(dm,
@@ -75,37 +57,13 @@ def main():
                      config.IMG_SIZE
                      )
     #create trainer
-    
-    trainer=pl.Trainer(
-                    logger=wandb_logger,
-                       gpus=[0,1],
-                       max_epochs=config.NUM_EPOCHS,
-                       precision=config.precision_compute,
-                    #    limit_train_batches=0.1, #only to debug
-                    #    limit_val_batches=0.05, #only to debug
-                    #    val_check_interval=1,
-                        auto_lr_find=config.AUTO_LR,
-
-                       log_gpu_memory=True,
-                       distributed_backend='ddp',
-                       accelerator="dpp",
-                       plugins=DDPPlugin(find_unused_parameters=False),
-                       callbacks=[
-                            early_stopping ,
-
-                            # checkpoint_callback,
-                            # confusion_matrix_wandb,
-                            learning_rate_monitor 
-                                  ],
-                       progress_bar_refresh_rate=5,
-                       
-                       )
+    trainer=get_trainer(wandb_logger,config)
     
     model=autotune_lr(trainer,model,dm,get_auto_lr=config.AUTO_LR)
 
     logging.info("empezando el entrenamiento")
     trainer.fit(model,datamodule=dm)
-    
-    
+
+
 if __name__=="__main__":
     main()
