@@ -4,7 +4,7 @@ from grocery_store_data_module import GroceryStoreDataModule
 from fgvc_aircraft_data_module import FGVCAircraft
 from lit_hierarchy_transformers import LitHierarchyTransformers
 from factory_augmentations import basic_transforms,transforms_imagenet_train,transforms_noaug_train,transforms_imagenet_eval
-from lit_general_model_level000 import LitGeneralModellevel000
+from lit_general_model_level0 import LitGeneralModellevel0
 
 import pytorch_lightning as pl
 def get_transform_function(transforms:str,img_size:int):
@@ -60,7 +60,7 @@ def get_system(datamodule:pl.LightningDataModule,
     if model_choice==ModelsAvailable.hierarchicaltransformers:
         model=LitHierarchyTransformers(datamodule.classlevel,optim,lr,img_size)
     else: 
-        model=LitGeneralModellevel000(model_choice,datamodule.classlevel,optim,lr,img_size)
+        model=LitGeneralModellevel0(model_choice,datamodule.classlevel,optim,lr,img_size)
         
 
     return model
