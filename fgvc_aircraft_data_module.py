@@ -20,9 +20,11 @@ class FGVCAircraft(TemplateDataModule):
         self.class_types = ('variant', 'family', 'manufacturer')
         self.splits = ('train', 'val', 'trainval', 'test')
         self.img_folder = os.path.join(self.root,'fgvc-aircraft-2013b', 'data', 'images')
-        classlevel={'level000':30 ,
-                        'level00': 70,  #extraer esta variable del dataset más adelante
-                        'level0':100
+        classlevel={
+                          #extraer esta variable del dataset más adelante
+                        'level0':100,
+                        'level00': 70,
+                        'level000':30 ,
                             }
         
         super().__init__(

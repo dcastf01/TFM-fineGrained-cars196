@@ -15,8 +15,10 @@ class GroceryStoreDataModule(TemplateDataModule):
         
         data_dir = os.path.join(data_dir,"GroceryStoreDataset")
         self.batch_size = batch_size
-        classlevel={'level00':43 ,
-                        'level0': 82,  #extraer esta variable del dataset más adelante
+        classlevel={
+            'level0': 82,
+            'level00':43 ,
+                          #extraer esta variable del dataset más adelante
                             }
         super().__init__(
             transform_fn=transform_fn,
