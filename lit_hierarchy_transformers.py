@@ -39,7 +39,7 @@ class LitHierarchyTransformers(LitSystem):
         metrics={}
         
         for (level, y_pred),y_true in zip(predictions.items(),targets):
-                loss[level]=self.criterion(y_pred,y_true)
+                loss["loss"+level[5:]]=self.criterion(y_pred,y_true)
                 preds_probability=y_pred.softmax(dim=1)
                 metrics[level]=self.train_metrics_base[level](preds_probability,y_true)
                 
@@ -61,13 +61,13 @@ class LitHierarchyTransformers(LitSystem):
         metrics={}
         
         for (level, y_pred),y_true in zip(predictions.items(),targets):
-                loss["_val_loss"+level[5:]]=self.criterion(y_pred,y_true)
+                loss["val_loss"+level[5:]]=self.criterion(y_pred,y_true)
                 preds_probability=y_pred.softmax(dim=1)
                 metrics[level]=self.valid_metrics_base[level](preds_probability,y_true)
                 
         loss_total=sum(loss.values())
         data_dict={
-                "_val_loss_total":loss_total,
+                "val_loss_total":loss_total,
                 **loss,
                 **dict(ele for sub in metrics.values() for ele in sub.items()) #remove top level from dictionary
                 }
