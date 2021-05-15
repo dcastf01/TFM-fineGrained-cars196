@@ -5,8 +5,11 @@ import pytorch_lightning as pl
 from lit_system import LitSystem
 import logging
 import timm
+from config import ModelsAvailable
+from losses import ContrastiveLoss
 class LitHierarchyTransformers(LitSystem):
         def __init__(self,
+                     model_name:ModelsAvailable,
                         class_level:dict,
                         optim,
                         lr,
@@ -15,33 +18,57 @@ class LitHierarchyTransformers(LitSystem):
                 
                 super().__init__(class_level,lr,optim)
                 
-                self.HierarchicalTransformers=HierarchicalTransformers(class_level,img_size) 
+                self.HierarchicalTransformers=HierarchicalTransformers(model_name,class_level,img_size) 
                         
-                self.criterion=F.cross_entropy
+                self.criterion=nn.CrossEntropyLoss()
+                self.contrastive_loss=ContrastiveLoss()
+                self.projection=nn.Linear(self.HierarchicalTransformers.out_features,128)
+                self.weights={
+                        'level0':0.7,
+                        'level00': 0.2,
+                        'level000':0.1
+                }
 
         def forward(self,x):
-                y0,y00=self.HierarchicalTransformers(x)
+                embbeding,predictions=self.HierarchicalTransformers(x)
                 
-                return y0,y00
+                return embbeding,predictions
 
         def training_step(self,batch,batch_idx):
                 x,targets=batch
-                embbeding,predictions=self.HierarchicalTransformers(x)
-                # a=self.con_loss(embbeding,targets[-1])
-                loss={}
+                pre_embbeding,predictions=self.HierarchicalTransformers(x)
+                embbeding=torch.squeeze(self.projection(pre_embbeding))
+
+                # loss=self.supcons_los(F.normalize(embbeding),targets[-1])
+                loss_crossentropy={}
+                loss_contrastive={}
                 metrics={}
-                # a=len(targets)
+                
                 for (level, y_pred),y_true in zip(predictions.items(),targets):
                         
-                        loss["loss"+level[5:]]=self.criterion(y_pred,y_true)
-                        preds_probability=y_pred.softmax(dim=1)
-
-                        metrics[level]=self.train_metrics_base[level](preds_probability,y_true)
+                        loss_crossentropy["loss_crosentropy"+level[5:]]=\
+                                self.apply_loss_correction_hierarchical(loss=self.criterion(y_pred,y_true),
+                                                                        level=level
+                                )
                         
-                loss_total=sum(loss.values())
+                        loss_contrastive["loss_contrastive"+level[5:]]=\
+                                self.apply_loss_correction_hierarchical(loss=self.contrastive_loss(embbeding,y_true),
+                                                                        level=level
+                                )
+                                
+                        preds_probability=y_pred.softmax(dim=1)
+                        metrics[level]=self.train_metrics_base[level](preds_probability,y_true)
+
+                total_loss_crossentropy=sum(loss_crossentropy.values())/len(loss_crossentropy)
+                total_loss_contrastive=sum(loss_contrastive.values())/len(loss_contrastive)
+                loss_total=(total_loss_crossentropy+total_loss_contrastive)/2
                 data_dict={
+                        "loss_crossentropy":total_loss_crossentropy,
+                        "loss_contrastive":total_loss_contrastive,
                         "loss_total":loss_total,
-                        **loss,
+                        
+                        **loss_crossentropy,
+                        **loss_contrastive,
                         **dict(ele for sub in metrics.values() for ele in sub.items()) #remove top level from dictionary
                         }
 
@@ -51,40 +78,53 @@ class LitHierarchyTransformers(LitSystem):
         def validation_step(self, batch, batch_idx):
                 '''used for logging metrics'''
                 x,targets=batch
-                embbeding,predictions=self.HierarchicalTransformers(x)
+                pre_embbeding,predictions=self.HierarchicalTransformers(x)
+                embbeding=torch.squeeze(self.projection(pre_embbeding))
+                # loss=self.supcons_los(F.normalize(embbeding),targets[-1])
                 # a=self.con_loss(embbeding,targets[-1])
                 loss={}
                 metrics={}
                 
+                loss_crossentropy={}
+                loss_contrastive={}
+                metrics={}
+                
                 for (level, y_pred),y_true in zip(predictions.items(),targets):
-                        loss["val_loss"+level[5:]]=self.criterion(y_pred,y_true)
+                        
+                        loss_crossentropy["loss_crosentropy"+level[5:]]=\
+                                self.apply_loss_correction_hierarchical(loss=self.criterion(y_pred,y_true),
+                                                                        level=level
+                                )
+                        
+                        loss_contrastive["loss_contrastive"+level[5:]]=\
+                                self.apply_loss_correction_hierarchical(loss=self.contrastive_loss(embbeding,y_true),
+                                                                        level=level
+                                )
                         preds_probability=y_pred.softmax(dim=1)
                         metrics[level]=self.valid_metrics_base[level](preds_probability,y_true)
-                        
-                loss_total=sum(loss.values())
+
+                total_loss_crossentropy=sum(loss_crossentropy.values())/len(loss_crossentropy)
+                total_loss_contrastive=sum(loss_contrastive.values())/len(loss_contrastive)
+                loss_total=(total_loss_crossentropy+total_loss_contrastive)/2
                 data_dict={
+                        "val_loss_crossentropy":total_loss_crossentropy,
+                        "val_loss_contrastive":total_loss_contrastive,
                         "val_loss_total":loss_total,
-                        **loss,
+                        
+                        **loss_crossentropy,
+                        **loss_contrastive,
                         **dict(ele for sub in metrics.values() for ele in sub.items()) #remove top level from dictionary
                         }
 
                 self.insert_each_metric_value_into_dict(data_dict,prefix="")
         
-        
-        def con_loss(self,features, labels):
-                B, _ = features.shape
-                features = F.normalize(features)
-                cos_matrix = features.mm(features.t())
-                pos_label_matrix = torch.stack([labels == labels[i] for i in range(B)]).float()
-                neg_label_matrix = 1 - pos_label_matrix
-                pos_cos_matrix = 1 - cos_matrix
-                neg_cos_matrix = cos_matrix - 0.4
-                neg_cos_matrix[neg_cos_matrix < 0] = 0
-                loss = (pos_cos_matrix * pos_label_matrix).sum() + (neg_cos_matrix * neg_label_matrix).sum()
-                loss /= (B * B)
-                return loss
+        def apply_loss_correction_hierarchical(self,loss,level):
+                
+                return loss*self.weights[level]
+                
 class HierarchicalTransformers(nn.Module):
         def __init__(self,
+                     model_chosen:ModelsAvailable,
                      class_level:dict,
                      img_size,
                      ):
@@ -92,23 +132,35 @@ class HierarchicalTransformers(nn.Module):
                 super(HierarchicalTransformers,self).__init__()
                 # self.encoder=ViTBase16(class_level=class_level,img_size=img_size)
                 
-                model_name="vit_base_patch16_224_in21k"
-                extras=dict(
-                    img_size=img_size
-                )   
-                self.encoder=timm.create_model(model_name,pretrained=True,**extras)
+                model_name=model_chosen.value
+               
+                if model_chosen.name[0:3]==ModelsAvailable.vit_large_patch16_224_in21k.name[0:3]:
+                        extras=dict(
+                        img_size=img_size
+                        )   
+                        self.encoder=timm.create_model(model_name,pretrained=True,**extras)
+                        
 
-                self.heads=nn.ModuleDict(  {
-                        level:nn.Linear(self.encoder.head.in_features,num_classes)
-                        for level,num_classes in class_level.items()
-                })
-                self.encoder.head=nn.Identity()
+                        self.heads=nn.ModuleDict(  {
+                                level:nn.Linear(self.encoder.head.in_features,num_classes)
+                                for level,num_classes in class_level.items()
+                        })
+                        self.out_features=self.encoder.head.in_features
+                        self.encoder.head=nn.Identity()
+                else:
+                        self.encoder=timm.create_model(model_name,pretrained=True)
+                        self.heads=nn.ModuleDict(  {
+                                level:nn.Linear(self.encoder.fc.in_features,num_classes)
+                                for level,num_classes in class_level.items()
+                        })
+                        self.out_features=self.encoder.fc.in_features
+                        self.encoder.fc=nn.Identity()
+            
+     
+                # self.encoder.forward_features=self.forward_features
                 
-                self.encoder.forward_features=self.forward_features
-                
-        def forward(self, x,extra_tensor=None):
-                x = self.forward_features(x,extra_tensor)
-                # x=self.encoder(x)
+        def forward(self, x):
+                x=self.encoder(x)
                 y={}
                 # prelevel=None
                 for level,head in self.heads.items():
