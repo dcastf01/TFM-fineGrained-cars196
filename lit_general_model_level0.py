@@ -22,7 +22,7 @@ class LitGeneralModellevel0(LitSystem):
         #puede que loss_fn no vaya aquí y aquí solo vaya modelo
         self.model=self.create_model(model_name,img_size,num_classes)
                 
-        self.criterion=F.cross_entropy
+        self.criterion=nn.CrossEntropyLoss()
 
     def forward(self,x):
         y000=self.model(x)
