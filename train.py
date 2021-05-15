@@ -51,6 +51,7 @@ def main():
 
     #get system
     model=get_system(dm,
+                     config.architecture_name,
                      config.experiment_name,
                      config.optim_name,
                      config.lr,
