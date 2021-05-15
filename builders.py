@@ -2,22 +2,28 @@
 import logging
 
 import pytorch_lightning as pl
+from PIL import Image
 from pytorch_lightning.callbacks import LearningRateMonitor
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 from pytorch_lightning.plugins import DDPPlugin
 
-from config import Dataset, ModelsAvailable, TransformsAvailable
-from factory_augmentations import (basic_transforms, transforms_imagenet_eval,
+from config import (ArchitectureType, Dataset, ModelsAvailable,
+                    TransformsAvailable)
+from factory_augmentations import (TwoCropTransform, basic_transforms,
+                                   transforms_imagenet_eval,
                                    transforms_imagenet_train,
                                    transforms_noaug_train)
 from fgvc_aircraft_data_module import FGVCAircraft
 from grocery_store_data_module import GroceryStoreDataModule
 from lit_general_model_level0 import LitGeneralModellevel0
 from lit_hierarchy_transformers import LitHierarchyTransformers
-from PIL import Image
 
-def get_transform_function(transforms:str,img_size:int):
+from losses import ContrastiveLoss
+
+def get_transform_function(transforms:str,img_size:int,
+                        #    config
+                           ):
     name_transform=TransformsAvailable[transforms.lower()]
     
     if name_transform==TransformsAvailable.basic_transforms:
@@ -27,7 +33,8 @@ def get_transform_function(transforms:str,img_size:int):
         
     elif name_transform==TransformsAvailable.timm_noaug:
         transform_fn=transforms_noaug_train(img_size=img_size)
-        
+    
+    # if config.two_crops
     #el transforms_magenet aplica un center crop de 0.875 el paper que estoy mirnado no lo usa
     transform_fn_test= transforms_imagenet_eval(img_size=img_size) 
     return transform_fn,transform_fn_test
@@ -57,20 +64,28 @@ def get_datamodule(name_dataset:str,batch_size:int,transform_fn,transform_fn_tes
     dm.setup()
     return dm
 
+def get_losses_fn():
+    pass
 
 def get_system(datamodule:pl.LightningDataModule,
+               architecture_type:str,
                model_choice:str,
                optim:str,
                lr:float,
                img_size:int,
                ):
     
-    if isinstance(model_choice,str):
+    if isinstance(model_choice,str) and isinstance(architecture_type,str):
         model_choice=ModelsAvailable[model_choice.lower()]
-    if model_choice==ModelsAvailable.hierarchicaltransformers:
-        model=LitHierarchyTransformers(datamodule.classlevel,optim,lr,img_size)
-    else: 
+        architecture_type=ArchitectureType[architecture_type.lower()]
+        
+    if architecture_type==ArchitectureType.hierarchical:
+        model=LitHierarchyTransformers(model_choice,datamodule.classlevel,optim,lr,img_size)
+    elif architecture_type==ArchitectureType.standar: 
         model=LitGeneralModellevel0(model_choice,datamodule.classlevel,optim,lr,img_size)
+    
+    else:
+        raise NotImplementedError
         
 
     return model
@@ -134,3 +149,4 @@ def get_trainer(wandb_logger,config):
                        )
     
     return trainer
+
