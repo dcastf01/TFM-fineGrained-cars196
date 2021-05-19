@@ -13,7 +13,10 @@ from config import (ArchitectureType, Dataset, ModelsAvailable,
 from factory_augmentations import (TwoCropTransform, basic_transforms,
                                    transforms_imagenet_eval,
                                    transforms_imagenet_train,
-                                   transforms_noaug_train)
+                                   transforms_noaug_train,
+                                   cars_train_transfroms_transFG,
+                                   cars_test_transfroms_transFG,
+                                   )
 from data_modules import FGVCAircraftDataModule,GroceryStoreDataModule,Cars196DataModule
 from lit_general_model_level0 import LitGeneralModellevel0
 from lit_hierarchy_transformers import LitHierarchyTransformers
@@ -24,7 +27,7 @@ def get_transform_function(transforms:str,img_size:int,
                         #    config
                            ):
     name_transform=TransformsAvailable[transforms.lower()]
-    
+    transform_fn_test=None
     if name_transform==TransformsAvailable.basic_transforms:
         transform_fn=basic_transforms(img_size=img_size)
     elif name_transform==TransformsAvailable.timm_transforms_imagenet_train:
@@ -33,9 +36,14 @@ def get_transform_function(transforms:str,img_size:int,
     elif name_transform==TransformsAvailable.timm_noaug:
         transform_fn=transforms_noaug_train(img_size=img_size)
     
+    elif name_transform==TransformsAvailable.cars_transfroms_transFG:
+        transform_fn=cars_train_transfroms_transFG(img_size=img_size)
+        transform_fn_test=cars_test_transfroms_transFG(img_size=img_size)
+    
+    if transform_fn_test is None:   
     # if config.two_crops
     #el transforms_magenet aplica un center crop de 0.875 el paper que estoy mirnado no lo usa
-    transform_fn_test= transforms_imagenet_eval(img_size=img_size) 
+        transform_fn_test= transforms_imagenet_eval(img_size=img_size) 
     return transform_fn,transform_fn_test
     
 def get_datamodule(name_dataset:str,batch_size:int,transform_fn,transform_fn_test):
@@ -83,6 +91,7 @@ def get_system(datamodule:pl.LightningDataModule,
                optim:str,
                lr:float,
                img_size:int,
+               pretrained:bool,
 
                ):
     
@@ -91,10 +100,10 @@ def get_system(datamodule:pl.LightningDataModule,
         architecture_type=ArchitectureType[architecture_type.lower()]
         
     if architecture_type==ArchitectureType.hierarchical:
-        model=LitHierarchyTransformers(model_choice,datamodule.classlevel,optim,lr,img_size,
+        model=LitHierarchyTransformers(model_choice,datamodule.classlevel,optim,lr,img_size,pretrained
                                        )
     elif architecture_type==ArchitectureType.standar: 
-        model=LitGeneralModellevel0(model_choice,datamodule.classlevel,optim,lr,img_size)
+        model=LitGeneralModellevel0(model_choice,datamodule.classlevel,optim,lr,img_size,pretrained)
     
     else:
         raise NotImplementedError
