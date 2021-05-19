@@ -1,7 +1,10 @@
 
+from typing import Optional
+
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
+
 from config import Optim
 from metrics import get_metrics_collections_base
 
@@ -11,6 +14,8 @@ class LitSystem(pl.LightningModule):
                  class_level,
                   lr:float=0.01,
                   optim:str="adam",
+                  epoch:Optional[int]=None,
+                  steps_per_epoch:Optional[int]=None, #len(train_loader)
                   ):
         
         super().__init__()
@@ -25,6 +30,8 @@ class LitSystem(pl.LightningModule):
         # log hyperparameters
         self.save_hyperparameters()    
         self.lr=lr
+        self.epochs=epoch
+        self.steps_per_epoch=steps_per_epoch
         if isinstance(optim,str):
             self.optim=Optim[optim.lower()]
         
@@ -40,7 +47,10 @@ class LitSystem(pl.LightningModule):
             optimizer= torch.optim.SGD(self.parameters(), lr=self.lr,momentum=0.9)
         # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=range(15,100,10),gamma=0.95)
         # scheduler=WarmupCosineSchedule(optimizer,warmup_steps=5,t_total=100)
-        return [optimizer]#, [scheduler]
+        scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer,
+                                                         max_lr=self.lr, steps_per_epoch=self.steps_per_epoch,
+                                        epochs=self.epochs, pct_start=0.1, cycle_momentum=False, div_factor=20)
+        return [optimizer], [scheduler]
 
     def insert_each_metric_value_into_dict(self,data_dict:dict,prefix:str):
  
@@ -64,8 +74,11 @@ class LitSystem(pl.LightningModule):
         return data_dict_aux
     
 
-from torch.optim.lr_scheduler import LambdaLR
 import math
+
+from torch.optim.lr_scheduler import LambdaLR
+
+
 class WarmupCosineSchedule(LambdaLR):
     """ Linear warmup and then cosine decay.
         Linearly increases learning rate from 0 to 1 over `warmup_steps` training steps.

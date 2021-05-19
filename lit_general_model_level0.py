@@ -1,26 +1,38 @@
 
+import logging
+from typing import Optional
+
+import pytorch_lightning as pl
+import timm
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
-import pytorch_lightning as pl
-from lit_system import LitSystem
-import timm
-import logging
+
 from config import ModelsAvailable
+from lit_system import LitSystem
+
+
 class LitGeneralModellevel0(LitSystem):
     def __init__(self,
                  model_name:ModelsAvailable,
                  class_level:dict,
                  optim:str,
                  lr:float,
-                 img_size:int
+                 img_size:int,
+                 pretrained:bool,
+                 epoch:Optional[int]=None,
+                 steps_per_epoch:Optional[int]=None, #len(train_loader)
                   ):
         
         fine_class={"level0":class_level["level0"]}
-        super().__init__(fine_class,lr,optim)
+        super().__init__(fine_class,
+                         lr,
+                         optim,
+                         epoch=epoch,
+                         steps_per_epoch=steps_per_epoch)
         num_classes=class_level["level0"]
         #puede que loss_fn no vaya aquí y aquí solo vaya modelo
-        self.model=self.create_model(model_name,img_size,num_classes)
+        self.model=self.create_model(model_name,img_size,num_classes,pretrained)
                 
         self.criterion=nn.CrossEntropyLoss()
 
@@ -86,7 +98,10 @@ class LitGeneralModellevel0(LitSystem):
             
             
             
-    def create_model(self,model_chosen:ModelsAvailable,img_size,num_classes):
+    def create_model(self,model_chosen:ModelsAvailable
+                     ,img_size,
+                     num_classes,
+                     pretrained):
             
             prefix_name=model_chosen.name[0:3]
             if prefix_name==ModelsAvailable.vit_large_patch16_224_in21k.name[0:3]:
@@ -95,10 +110,9 @@ class LitGeneralModellevel0(LitSystem):
                 img_size=img_size
                 )
                 
-                model=timm.create_model(model_chosen.value,pretrained=True,**extras)
-                model.head=nn.Linear(model.head.in_features, num_classes)
+                model=timm.create_model(model_chosen.value,pretrained=True,num_classes=num_classes,**extras)
             elif model_chosen==ModelsAvailable.resnet50:
                 
-                model=timm.create_model(model_chosen.value,pretrained=True)
-                model.fc=nn.Linear(model.fc.in_features,num_classes)
+                model=timm.create_model(model_chosen.value,pretrained=True,num_classes=num_classes)
+   
             return model

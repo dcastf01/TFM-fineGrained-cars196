@@ -1,20 +1,19 @@
 program: train.py
-name: baseline_vit_fgvcaircraft_differents_models_differents_lr
+name: baseline_fgvcaircraft_architecture_vs_models_vs_lr
 method: bayes
 metric:
   goal: minimize
-  name: _val_loss0
+  name: _val_loss_total
 parameters:
   transform_name:
-    values:
+    value:
       - timm_transforms_imagenet_train 
   experiment_name:
-    values: 
+    value: 
       - vit_base_patch16_224_in21k
-      - resnet50
-      - vit_large_patch16_224_in21k
-      - vit_large_patch32_224_in21k
-
+  architecture_name:
+      values:
+        - hierarchical
   dataset_name:
     value: fgvcaircraft
   optim_name:
@@ -26,8 +25,8 @@ parameters:
   NUM_EPOCHS:
     value: 30
   lr:
-    max: 0.0005
-    min: 0.000005
+    max: 0.0001
+    min: 0.00001
     distribution: uniform
   gpu0:
     value: true
@@ -35,7 +34,15 @@ parameters:
   gpu1:
     value: true
     distribution: constant
+  alfa:
+    distribution: uniform
+    min: 0
+    max: 1
+  increment_contrastive:
+    distribution: uniform
+    min: 1
+    max: 10
 
 early_terminate:
-  min_iter: 5
+  min_iter: 15
   type: hyperband

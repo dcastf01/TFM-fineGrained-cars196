@@ -61,7 +61,9 @@ def main():
                      config.optim_name,
                      config.lr,
                      config.IMG_SIZE,
-  
+                     config.PRETRAINED_MODEL,
+                     config.NUM_EPOCHS,
+                     steps_per_epoch=len(dm.train_dataloader())
                      )
     #create trainer
     trainer=get_trainer(wandb_logger,config)

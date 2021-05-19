@@ -1,24 +1,37 @@
+import logging
+from typing import Optional
+
+import pytorch_lightning as pl
+import timm
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
-import pytorch_lightning as pl
-from lit_system import LitSystem
-import logging
-import timm
+
 from config import ModelsAvailable
+from lit_system import LitSystem
 from losses import ContrastiveLoss
+
+
 class LitHierarchyTransformers(LitSystem):
         def __init__(self,
-                     model_name:ModelsAvailable,
+                        model_name:ModelsAvailable,
                         class_level:dict,
                         optim,
                         lr,
                         img_size,
+                        pretrained,
+                        epoch:Optional[int]=None,
+                        steps_per_epoch:Optional[int]=None,
                         ):
                 
-                super().__init__(class_level,lr,optim)
+                super().__init__(fine_class,
+                         lr,
+                         optim,
+                         epoch=epoch,
+                         steps_per_epoch=steps_per_epoch)
                 
-                self.HierarchicalTransformers=HierarchicalTransformers(model_name,class_level,img_size) 
+                self.HierarchicalTransformers=HierarchicalTransformers(model_name,class_level,img_size,
+                                                                       pretrained=pretrained) 
                         
                 self.criterion=nn.CrossEntropyLoss()
                 self.contrastive_loss=ContrastiveLoss()
@@ -128,6 +141,7 @@ class HierarchicalTransformers(nn.Module):
                      class_level:dict,
                      img_size:int,
                      overlap:bool=None,
+                     pretrained:bool=True
                      
                      ):
 
@@ -161,7 +175,7 @@ class HierarchicalTransformers(nn.Module):
                         self.out_features=self.encoder.head.in_features
                         self.encoder.head=nn.Identity()
                 else:
-                        self.encoder=timm.create_model(model_name,pretrained=True)
+                        self.encoder=timm.create_model(model_name,pretrained=pretrained)
                         self.heads=nn.ModuleDict(  {
                                 level:nn.Linear(self.encoder.fc.in_features,num_classes)
                                 for level,num_classes in class_level.items()
@@ -182,6 +196,8 @@ class HierarchicalTransformers(nn.Module):
 
 
 from timm.models.layers.helpers import to_2tuple
+
+
 class PatchEmbed(nn.Module):
     """ 2D Image to Patch Embedding
     """

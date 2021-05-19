@@ -36,7 +36,7 @@ def get_transform_function(transforms:str,img_size:int,
     elif name_transform==TransformsAvailable.timm_noaug:
         transform_fn=transforms_noaug_train(img_size=img_size)
     
-    elif name_transform==TransformsAvailable.cars_transfroms_transFG:
+    elif name_transform==TransformsAvailable.cars_transfroms_transfg:
         transform_fn=cars_train_transfroms_transFG(img_size=img_size)
         transform_fn_test=cars_test_transfroms_transFG(img_size=img_size)
     
@@ -85,13 +85,15 @@ def get_datamodule(name_dataset:str,batch_size:int,transform_fn,transform_fn_tes
 def get_losses_fn():
     pass
 
-def get_system(datamodule:pl.LightningDataModule,
-               architecture_type:str,
-               model_choice:str,
-               optim:str,
-               lr:float,
-               img_size:int,
-               pretrained:bool,
+def get_system( datamodule:pl.LightningDataModule,
+                architecture_type:str,
+                model_choice:str,
+                optim:str,
+                lr:float,
+                img_size:int,
+                pretrained:bool,
+                epochs:int,
+                steps_per_epoch:int
 
                ):
     
@@ -100,10 +102,25 @@ def get_system(datamodule:pl.LightningDataModule,
         architecture_type=ArchitectureType[architecture_type.lower()]
         
     if architecture_type==ArchitectureType.hierarchical:
-        model=LitHierarchyTransformers(model_choice,datamodule.classlevel,optim,lr,img_size,pretrained
+        model=LitHierarchyTransformers(model_choice,
+                                       datamodule.classlevel,
+                                       optim,
+                                       lr,
+                                       img_size,
+                                       pretrained,
+                                       epochs,
+                                       steps_per_epoch
                                        )
     elif architecture_type==ArchitectureType.standar: 
-        model=LitGeneralModellevel0(model_choice,datamodule.classlevel,optim,lr,img_size,pretrained)
+        model=LitGeneralModellevel0(model_choice,
+                                    datamodule.classlevel,
+                                    optim,
+                                    lr,
+                                    img_size,
+                                    pretrained,
+                                    epochs,
+                                    steps_per_epoch
+                                    )
     
     else:
         raise NotImplementedError
@@ -160,7 +177,7 @@ def get_trainer(wandb_logger,config):
                     #    accelerator=accelerator,
                     #    plugins=plugins,
                        callbacks=[
-                            # early_stopping ,
+                            early_stopping ,
                             # checkpoint_callback,
                             # confusion_matrix_wandb,
                             learning_rate_monitor 

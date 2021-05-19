@@ -7,7 +7,7 @@ from PIL import Image
 from autoaugment import AutoAugImageNetPolicy
 
 def cars_train_transfroms_transFG(img_size:int=448):
-    transforms=transforms.Compose([
+    transform=transforms.Compose([
                                     transforms.Resize((600, 600), Image.BILINEAR),
                                     transforms.RandomCrop((448, 448)),
                                     transforms.RandomHorizontalFlip(),
@@ -15,7 +15,7 @@ def cars_train_transfroms_transFG(img_size:int=448):
                                     transforms.ToTensor(),
                                     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]
                        )                            
-    return transforms
+    return transform
     
 def cars_test_transfroms_transFG(img_size:int=448):
     transform=transforms.Compose([
@@ -24,7 +24,7 @@ def cars_test_transfroms_transFG(img_size:int=448):
                                     transforms.ToTensor(),
                                     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]
                             )                 
-    return transforms
+    return transform
 
 def basic_transforms(img_size:int=224):
     basic_transform=A.Compose(

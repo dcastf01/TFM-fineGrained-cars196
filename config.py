@@ -32,6 +32,7 @@ class TransformsAvailable(Enum):
     timm_noaug=2
     timm_transforms_imagenet_train=3
     transforms_imagenet_eval=4
+    cars_transfroms_transfg=5
 
 class losstype(Enum):
     
@@ -43,44 +44,45 @@ class losstype(Enum):
 @dataclass
 class CONFIG(object):
     
-    experiment=ModelsAvailable.vit_base_patch16_224_in21k
+    experiment=ModelsAvailable.resnet50
     experiment_name:str=experiment.name
     architecture =ArchitectureType.standar
     architecture_name:str=architecture.name
     # experiment_net:str=experiment.value
-    PRETRAINED_MODEL:bool=True
+    PRETRAINED_MODEL:bool=False
     transfer_learning:bool=False #solo se entrena el head ##no funcional en este repositorio aun
     #torch config
     DEVICE: str = "cuda" if torch.cuda.is_available() else "cpu"
     # TRAIN_DIR = "data/train"
     # VAL_DIR = "data/val"
-    batch_size:int =7
+    batch_size:int =128
     dataset=Dataset.cars196
     dataset_name:str=dataset.name
     precision_compute:int=16
     
-    optim=Optim.sgd
+    optim=Optim.adam
     optim_name:str=optim.name
-    transform=TransformsAvailable.timm_transforms_imagenet_train
+    transform=TransformsAvailable.cars_transfroms_transfg
     transform_name:str=transform.name
     
     transform_to_test=TransformsAvailable.transforms_imagenet_eval
     transform_to_test:str=transform_to_test.name
     
-    lr:float = 0.0028
+    lr:float = 3e-4
     AUTO_LR :bool= False
     # LAMBDA_IDENTITY = 0.0
     NUM_WORKERS:int = 0
     SEED:int=1
     IMG_SIZE:int=448
-    NUM_EPOCHS :int= 500
-    LOAD_MODEL :bool= True
-    SAVE_MODEL :bool= True
+    NUM_EPOCHS :int= 30
+    # LOAD_MODEL :bool= True
+    # SAVE_MODEL :bool= True
     PATH_CHECKPOINT: str= os.path.join(ROOT_WORKSPACE,"classification/model/checkpoint")
     
     gpu0:bool=False
     gpu1:bool=True
     notes:str=" correr diferentes modelos para probar su funcionamiento"
+    ignore_globs:str="*.ckpt"
     
     #hyperparameters
     
