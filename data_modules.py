@@ -12,7 +12,7 @@ from config import CONFIG
 from loaders import Cars196Loader, FGVCAircraftLoader, GroceryStoreLoader
 from template_data_module import TemplateDataModule
 
-
+from tqdm import tqdm
 class FGVCAircraftDataModule(TemplateDataModule):
     def __init__(self,
                  transform_fn,
@@ -161,24 +161,31 @@ class GroceryStoreDataModule(TemplateDataModule):
 
 class Cars196DataModule(TemplateDataModule):
     
-    def __init__(self, transform_fn, transform_fn_test, classlevel: dict, data_dir: str, batch_size: int):
+    def __init__(self, transform_fn, transform_fn_test, data_dir: str, batch_size: int):
         
-        self.root=data_dir
-        self.img_folder_train=os.path.join(self.root,"cars196","cars_train")
-        self.img_folder_test=os.path.join(self.root,"cars196","cars_test")
-        self.img_folder_crop_train=os.path.join(self.root,"cars196","crop_cars_train")
-        self.img_folder_crop_test=os.path.join(self.root,"cars196","crop_cars_test")
+        self.root=os.path.join(data_dir,"cars196")
+        self.img_folder_train=os.path.join(self.root,"cars_train")
+        self.img_folder_test=os.path.join(self.root,"cars_test")
+        self.img_folder_crop_train=os.path.join(self.root,"crop_cars_train")
+        self.img_folder_crop_test=os.path.join(self.root,"crop_cars_test")
         
-        self.train_annos_mat=os.path.join(self.root,"cars196","devkit","cars_train_annos.mat")
-        self.test_annos_mat=os.path.join(self.root,"cars196","devkit","cars_test_annos.mat")
+        self.train_annos_mat=os.path.join(self.root,"devkit","cars_train_annos.mat")
+        self.test_annos_mat=os.path.join(self.root,"devkit","cars_test_annos_withlabels.mat")
         
+        self.urls=[
+            "http://ai.stanford.edu/~jkrause/car196/cars_train.tgz",
+            "http://ai.stanford.edu/~jkrause/car196/cars_test.tgz",
+            "https://ai.stanford.edu/~jkrause/cars/car_devkit.tgz"
+            
+                    ]
+        self.extra_urls_not_compress="http://ai.stanford.edu/~jkrause/car196/cars_test_annos_withlabels.mat"
         self.class_types = ('make', 'model', 'released year')
         
         classlevel={
                           #extraer esta variable del dataset más adelante
-                        # 'level0':100,
-                        # 'level00': 70,
-                        # 'level000':30 ,
+                        'level0':196,
+                        'level00': 189,
+                        'level000':49 ,
                             }
         
         super().__init__(transform_fn, transform_fn_test, classlevel, data_dir=data_dir, batch_size=batch_size)
@@ -186,20 +193,32 @@ class Cars196DataModule(TemplateDataModule):
     def prepare_data(self):
         # manual download from 
         #https://ai.stanford.edu/~jkrause/cars/car_dataset.html
+        
         self.download()
         
-        os.makedirs(self.img_folder_crop_train)
-        os.makedirs(self.img_folder_crop_test)
+        
         
         self.crop_images()
         
     def setup(self, stage=None):
-        self.cars196_train = Cars196Loader(self.transform_fn,
-                                                      self.data_dir, split="train")
-        self.cars196_val= Cars196Loader(self.transform_fn_test,
-                                                   self.data_dir, split="val")
-        self.cars196_test = Cars196Loader(self.transform_fn_test,
-                                                     self.data_dir, split="test")
+        self.cars196_train = Cars196Loader( self.transform_fn,
+                                            self.img_folder_crop_train,
+                                            self.train_annos_mat,
+                                            self.root,
+                                            split="train"
+                                                      )
+        self.cars196_val= Cars196Loader(    self.transform_fn_test,
+                                            self.img_folder_crop_test,
+                                            self.test_annos_mat,
+                                            self.root,
+                                            split="val"
+                                            )
+        self.cars196_test = Cars196Loader(  self.transform_fn_test,
+                                            self.img_folder_crop_test,
+                                            self.test_annos_mat,
+                                            self.root,
+                                            split="test"
+                                            )
 
     def train_dataloader(self):
         return DataLoader(self.cars196_train, batch_size=self.batch_size,
@@ -226,29 +245,35 @@ class Cars196DataModule(TemplateDataModule):
                           )
               
     def _check_exists(self):
-        return os.path.exists(os.path.join(self.root, self.img_folder_train))\
-            and os.path.exists(os.path.join(self.root, self.img_folder_test))
+        return os.path.exists( self.img_folder_train)\
+            and os.path.exists(self.img_folder_test)
 
     def download(self):
         if self._check_exists():
             return
-
-        # prepare to download data to PARENT_DIR/fgvc-aircraft-2013.tar.gz
-        print('Downloading %s...' % self.url)
-        tar_name = self.url.rpartition('/')[-1]
-        download_url(self.url, root=self.root, filename=tar_name)
-        tar_path = os.path.join(self.root, tar_name)
-        print('Extracting %s...' % tar_path)
-        extract_archive(tar_path)
-        print('Done!')
+        
+        os.makedirs(os.path.join(self.root),exist_ok=True)
+        # prepare to download data to PARENT_DIR/cars196
+        for url in self.urls:
+            print('Downloading %s...' % url)
+            tar_name = url.rpartition('/')[-1]
+            download_url(url, root=self.root, filename=tar_name)
+            tar_path = os.path.join(self.root, tar_name)
+            print('Extracting %s...' % tar_path)
+            extract_archive(tar_path)
+            print('Done!')
+        download_url(self.extra_urls_not_compress,
+                     root=os.path.join(self.root,"devkit"),
+                     filename=self.test_annos_mat)
         
     def crop_images(self):
         def crop_split(metas,original_folder,extracted_folder):
+            #https://github.com/phongdinhv/stanford-cars-model/blob/master/data_processing/extract_cars.py
             from scipy import io as mat_io
             from skimage import io as img_io
             labels_meta = mat_io.loadmat(metas)
 
-            for img_ in labels_meta['annotations'][0]:
+            for img_ in tqdm(labels_meta['annotations'][0],miniters=100):
                 x_min = img_[0][0][0]
                 y_min = img_[1][0][0]
 
@@ -260,7 +285,7 @@ class Cars196DataModule(TemplateDataModule):
                 elif len(img_) == 5:
                     img_name = img_[4][0]
                 try:
-                    img_in = img_io.imread(original_folder + img_name)
+                    img_in = img_io.imread(os.path.join(original_folder, img_name))
                 except Exception:
                     print("Error while reading!")
                 else:
@@ -268,18 +293,22 @@ class Cars196DataModule(TemplateDataModule):
                     cars_extracted = img_in[y_min:y_max, x_min:x_max]
                     logging.info(x_min, y_min, x_max, y_max, cars_extracted.shape, img_in.shape, img_name)
 
-                    img_io.imsave(extracted_folder + img_name, cars_extracted)
+                    img_io.imsave(os.path.join(extracted_folder, img_name), cars_extracted)
         
-        crop_split(
-                    metas=self.train_annos_mat,
-                    original_folder=self.img_folder_train,
-                    extracted_folder=self.img_folder_crop_train
-                    )
-        crop_split(
-                    metas=self.test_annos_mat,
-                    original_folder=self.img_folder_test,
-                    extracted_folder=self.img_folder_crop_test
+        if not os.path.exists( self.img_folder_crop_train):
+            os.makedirs(self.img_folder_crop_train,exist_ok=True)
+            crop_split(
+                        metas=self.train_annos_mat,
+                        original_folder=self.img_folder_train,
+                        extracted_folder=self.img_folder_crop_train
+                        )
+        if not os.path.exists( self.img_folder_crop_test):
+            os.makedirs(self.img_folder_crop_test,exist_ok=True)
+            crop_split(
+                        metas=self.test_annos_mat,
+                        original_folder=self.img_folder_test,
+                        extracted_folder=self.img_folder_crop_test
+                
+                        )
             
-                     )
-        
 
