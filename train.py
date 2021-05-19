@@ -14,8 +14,12 @@ from config import CONFIG,create_config_dict
 
 from builders import get_datamodule,get_system, get_transform_function,get_trainer
 from autotune import autotune_lr
+import os 
+
+
 
 def main():
+    os.environ["WANDB_IGNORE_GLOBS"]="*.ckpt"
     logging.info("empezando setup del experimento")
     torch.backends.cudnn.benchmark = True
     config=CONFIG()
@@ -27,7 +31,7 @@ def main():
             config=config_dict
                 )
     config=wandb.config
-    wandb.run.name=config.experiment_name+" "+\
+    wandb.run.name=config.experiment_name[:5]+" "+\
                     datetime.datetime.utcnow().strftime("%Y-%m-%d %X")
                     
     wandb.run.notes=config.notes
@@ -35,6 +39,7 @@ def main():
     
     wandb_logger=WandbLogger(
         #offline=True,
+        log_model =False
                 )
     
     #get transform_fn
@@ -55,7 +60,8 @@ def main():
                      config.experiment_name,
                      config.optim_name,
                      config.lr,
-                     config.IMG_SIZE
+                     config.IMG_SIZE,
+  
                      )
     #create trainer
     trainer=get_trainer(wandb_logger,config)
