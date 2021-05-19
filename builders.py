@@ -14,8 +14,7 @@ from factory_augmentations import (TwoCropTransform, basic_transforms,
                                    transforms_imagenet_eval,
                                    transforms_imagenet_train,
                                    transforms_noaug_train)
-from fgvc_aircraft_data_module import FGVCAircraft
-from grocery_store_data_module import GroceryStoreDataModule
+from data_modules import FGVCAircraftDataModule,GroceryStoreDataModule,Cars196DataModule
 from lit_general_model_level0 import LitGeneralModellevel0
 from lit_hierarchy_transformers import LitHierarchyTransformers
 
@@ -46,18 +45,29 @@ def get_datamodule(name_dataset:str,batch_size:int,transform_fn,transform_fn_tes
  
     if name_dataset==Dataset.grocerydataset:
         
-        dm=GroceryStoreDataModule(data_dir="data",
-                                  batch_size=batch_size,
-                                  transform_fn=transform_fn,
-                                  transform_fn_test=transform_fn_test,
-                                  )
+        dm=GroceryStoreDataModule(
+            data_dir="data",
+            batch_size=batch_size,
+            transform_fn=transform_fn,
+            transform_fn_test=transform_fn_test,
+            )
         
     elif name_dataset==Dataset.fgvcaircraft:
-        dm=FGVCAircraft(transform_fn=transform_fn,
-                        transform_fn_test=transform_fn_test,
-                        data_dir="data",
-                        batch_size=batch_size,
-                        )
+        dm=FGVCAircraftDataModule(
+            transform_fn=transform_fn,
+            transform_fn_test=transform_fn_test,
+            data_dir="data",
+            batch_size=batch_size,
+            )
+    
+    elif name_dataset==Dataset.cars196:
+        
+        dm=Cars196DataModule(
+            transform_fn=transform_fn,
+            transform_fn_test=transform_fn_test,
+            data_dir="data",
+            batch_size=batch_size
+                    )
     else: 
         raise ("choice a correct dataset")
     dm.prepare_data()   
@@ -73,6 +83,7 @@ def get_system(datamodule:pl.LightningDataModule,
                optim:str,
                lr:float,
                img_size:int,
+
                ):
     
     if isinstance(model_choice,str) and isinstance(architecture_type,str):
@@ -80,7 +91,8 @@ def get_system(datamodule:pl.LightningDataModule,
         architecture_type=ArchitectureType[architecture_type.lower()]
         
     if architecture_type==ArchitectureType.hierarchical:
-        model=LitHierarchyTransformers(model_choice,datamodule.classlevel,optim,lr,img_size)
+        model=LitHierarchyTransformers(model_choice,datamodule.classlevel,optim,lr,img_size,
+                                       )
     elif architecture_type==ArchitectureType.standar: 
         model=LitGeneralModellevel0(model_choice,datamodule.classlevel,optim,lr,img_size)
     
@@ -139,7 +151,7 @@ def get_trainer(wandb_logger,config):
                     #    accelerator=accelerator,
                     #    plugins=plugins,
                        callbacks=[
-                            early_stopping ,
+                            # early_stopping ,
                             # checkpoint_callback,
                             # confusion_matrix_wandb,
                             learning_rate_monitor 
