@@ -15,6 +15,7 @@ class ArchitectureType(Enum):
 class ModelsAvailable(Enum):
     hierarchicaltransformers="version_con_multiples_heads"
     vit_base_patch16_224_in21k="vit_base_patch16_224_in21k"
+    vit_base_patch16_224_in21k_overlap="vit_base_patch16_224_in21k"
     resnet50="resnet50"
     vit_large_patch16_224_in21k="vit_large_patch16_224_in21k"
     vit_large_patch32_224_in21k="vit_large_patch32_224_in21k"
@@ -44,7 +45,7 @@ class losstype(Enum):
 @dataclass
 class CONFIG(object):
     
-    experiment=ModelsAvailable.resnet50
+    experiment=ModelsAvailable.vit_base_patch16_224_in21k_overlap
     experiment_name:str=experiment.name
     architecture =ArchitectureType.standar
     architecture_name:str=architecture.name
@@ -55,7 +56,7 @@ class CONFIG(object):
     DEVICE: str = "cuda" if torch.cuda.is_available() else "cpu"
     # TRAIN_DIR = "data/train"
     # VAL_DIR = "data/val"
-    batch_size:int =128
+    batch_size:int =16
     dataset=Dataset.cars196
     dataset_name:str=dataset.name
     precision_compute:int=16
@@ -71,7 +72,7 @@ class CONFIG(object):
     lr:float = 3e-4
     AUTO_LR :bool= False
     # LAMBDA_IDENTITY = 0.0
-    NUM_WORKERS:int = 0
+    NUM_WORKERS:int = 4
     SEED:int=1
     IMG_SIZE:int=448
     NUM_EPOCHS :int= 30
@@ -79,8 +80,8 @@ class CONFIG(object):
     # SAVE_MODEL :bool= True
     PATH_CHECKPOINT: str= os.path.join(ROOT_WORKSPACE,"classification/model/checkpoint")
     
-    gpu0:bool=False
-    gpu1:bool=True
+    gpu0:bool=True
+    gpu1:bool=False
     notes:str=" correr diferentes modelos para probar su funcionamiento"
     ignore_globs:str="*.ckpt"
     

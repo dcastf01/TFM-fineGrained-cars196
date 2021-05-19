@@ -11,7 +11,7 @@ from torch.nn import functional as F
 from config import ModelsAvailable
 from lit_system import LitSystem
 
-
+from factory_model import create_model
 class LitGeneralModellevel0(LitSystem):
     def __init__(self,
                  model_name:ModelsAvailable,
@@ -32,7 +32,7 @@ class LitGeneralModellevel0(LitSystem):
                          steps_per_epoch=steps_per_epoch)
         num_classes=class_level["level0"]
         #puede que loss_fn no vaya aquí y aquí solo vaya modelo
-        self.model=self.create_model(model_name,img_size,num_classes,pretrained)
+        self.model=create_model(model_name,img_size,num_classes,pretrained)
                 
         self.criterion=nn.CrossEntropyLoss()
 
@@ -95,24 +95,3 @@ class LitGeneralModellevel0(LitSystem):
             sum_by_batch=torch.sum(preds0_probability,dim=1)
             logging.error("la suma de las predicciones da distintos de 1, procedemos a imprimir el primer elemento")
             print(sum_by_batch)
-            
-            
-            
-    def create_model(self,model_chosen:ModelsAvailable
-                     ,img_size,
-                     num_classes,
-                     pretrained):
-            
-            prefix_name=model_chosen.name[0:3]
-            if prefix_name==ModelsAvailable.vit_large_patch16_224_in21k.name[0:3]:
-                
-                extras=dict(
-                img_size=img_size
-                )
-                
-                model=timm.create_model(model_chosen.value,pretrained=True,num_classes=num_classes,**extras)
-            elif model_chosen==ModelsAvailable.resnet50:
-                
-                model=timm.create_model(model_chosen.value,pretrained=True,num_classes=num_classes)
-   
-            return model
