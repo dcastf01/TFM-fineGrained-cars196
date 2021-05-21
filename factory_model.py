@@ -1,10 +1,13 @@
 import torch.nn as nn
-
+import torch.nn.functional as F
 
 from timm.models.layers.helpers import to_2tuple
 from config import ModelsAvailable
 import timm
 import torch
+
+import types
+
 def create_model(model_chosen:ModelsAvailable,
                     img_size:int,
                     num_classes:int,
@@ -17,8 +20,8 @@ def create_model(model_chosen:ModelsAvailable,
                 extras=dict(
                 img_size=img_size
                 )
-                
-                model=timm.create_model(model_chosen.value,pretrained=pretrained,num_classes=num_classes,**extras)
+                model_name=model_chosen.value.split("-")[0]
+                model=timm.create_model(model_name,pretrained=pretrained,num_classes=num_classes,**extras)
                 
                 overlap=model_chosen.name.split("_")[-1]
                 if overlap=="overlap":
@@ -29,13 +32,26 @@ def create_model(model_chosen:ModelsAvailable,
                                 model.pos_embed = nn.Parameter(torch.zeros(1,
                                                                             model.patch_embed.num_patches + 1,
                                                                             768))
-            
+
+                model.pre_classifier=model.forward_features
+                model.classifier=model.head
+                
             elif model_chosen==ModelsAvailable.resnet50:
                 
                 model=timm.create_model(model_chosen.value,pretrained=pretrained,num_classes=num_classes)
-   
+                model.pre_classifier=types.MethodType(resnet_forward_features,model)
+                model.classifier=model.fc
             return model
-
+def resnet_forward_features(self,x):
+    x=self.forward_features(x)
+    x = self.global_pool(x)
+    if self.drop_rate:
+        x = F.dropout(x, p=float(self.drop_rate), training=self.training)
+    return x
+def resnet_classifier(self,x):
+    
+    x = self.fc(x)
+    return x
 class PatchEmbed(nn.Module):
     """ 2D Image to Patch Embedding
     """

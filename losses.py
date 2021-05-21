@@ -8,12 +8,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-class ContrastiveLoss(nn.Module):
+class ContrastiveLossFG(nn.Module):
     
     def __init__(self):
-        super(ContrastiveLoss,self).__init__()
-    def forward(self,features,labels):
-        loss= self.con_loss(features,labels)
+        super(ContrastiveLossFG,self).__init__()
+    def forward(self,embbeding,preds,labels):
+        loss= self.con_loss(embbeding,labels)
         return loss
     def con_loss(self,features, labels):
                     B, _ = features.shape
@@ -31,6 +31,14 @@ class ContrastiveLoss(nn.Module):
                     return loss
 
 
+class CrosentropyStandar(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.criterion=nn.CrossEntropyLoss()
+        
+    def forward(self,embbeding,preds,targets):
+        return self.criterion(preds,targets)
+    
 class SupConLoss(nn.Module):
     """Supervised Contrastive Learning: https://arxiv.org/pdf/2004.11362.pdf.
     It also supports the unsupervised contrastive loss in SimCLR"""

@@ -9,7 +9,7 @@ from torch.nn import functional as F
 
 from config import ModelsAvailable
 from lit_system import LitSystem
-from losses import ContrastiveLoss
+from losses import ContrastiveLossFG
 from factory_model import PatchEmbed
 
 class LitHierarchyTransformers(LitSystem):
@@ -34,7 +34,7 @@ class LitHierarchyTransformers(LitSystem):
                                                                        pretrained=pretrained) 
                         
                 self.criterion=nn.CrossEntropyLoss()
-                self.contrastive_loss=ContrastiveLoss()
+                self.contrastive_loss=ContrastiveLossFG()
                 self.projection=nn.Linear(self.HierarchicalTransformers.out_features,128)
                 self.weights={
                         'level0':0.7,
@@ -63,18 +63,19 @@ class LitHierarchyTransformers(LitSystem):
                 embbeding=torch.squeeze(self.projection(pre_embbeding),dim=1)
                 loss_total=self.train_val_steps(predictions,embbeding,targets,self.valid_metrics_base)
         
-        def train_val_steps(self,predictions,embbeding,targets,split_metrics):
+        def train_val_steps(self,predictions,embbeding,targets,split_metrics,split):
+                #falta el split
                 loss_crossentropy={}
                 loss_contrastive={}
                 metrics={}
                 for (level, y_pred),y_true in zip(predictions.items(),targets):
                         
-                        loss_crossentropy["loss_crosentropy"+level[5:]]=\
+                        loss_crossentropy[f"{split}_loss_crosentropy"+level[5:]]=\
                                 self.apply_loss_correction_hierarchical(loss=self.criterion(y_pred,y_true),
                                                                         level=level
                                 )
                         
-                        loss_contrastive["loss_contrastive"+level[5:]]=\
+                        loss_contrastive[f"{split}_loss_contrastive"+level[5:]]=\
                                 self.apply_loss_correction_hierarchical(loss=self.contrastive_loss(embbeding,y_true),
                                                                         level=level
                                 )
@@ -86,9 +87,9 @@ class LitHierarchyTransformers(LitSystem):
                 total_loss_contrastive=sum(loss_contrastive.values())
                 loss_total=total_loss_crossentropy+total_loss_contrastive
                 data_dict={
-                        "loss_crossentropy":total_loss_crossentropy,
-                        "loss_contrastive":total_loss_contrastive,
-                        "loss_total":loss_total,            
+                        f"{split}_loss_crossentropy":total_loss_crossentropy,
+                        f"{split}_loss_contrastive":total_loss_contrastive,
+                        f"{split}_loss_total":loss_total,            
                         **loss_crossentropy,
                         **loss_contrastive,
                         **dict(ele for sub in metrics.values() for ele in sub.items()) #remove top level from dictionary

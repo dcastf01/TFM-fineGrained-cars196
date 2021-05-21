@@ -46,10 +46,10 @@ class LitSystem(pl.LightningModule):
         elif self.optim==Optim.sgd:
             optimizer= torch.optim.SGD(self.parameters(), lr=self.lr,momentum=0.9)
         # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=range(15,100,10),gamma=0.95)
-        # scheduler=WarmupCosineSchedule(optimizer,warmup_steps=5,t_total=100)
-        scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer,
-                                                         max_lr=self.lr, steps_per_epoch=self.steps_per_epoch,
-                                        epochs=self.epochs, pct_start=0.1, cycle_momentum=False, div_factor=20)
+        scheduler=WarmupCosineSchedule(optimizer,warmup_steps=5,t_total=self.epochs)
+        # scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer,
+        #                                                  max_lr=self.lr, steps_per_epoch=self.steps_per_epoch,
+        #                                 epochs=self.epochs, pct_start=0.2, cycle_momentum=False, div_factor=20)
         return [optimizer], [scheduler]
 
     def insert_each_metric_value_into_dict(self,data_dict:dict,prefix:str):

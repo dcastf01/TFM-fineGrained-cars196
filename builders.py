@@ -9,7 +9,7 @@ from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 from pytorch_lightning.plugins import DDPPlugin
 
 from config import (ArchitectureType, Dataset, ModelsAvailable,
-                    TransformsAvailable)
+                    TransformsAvailable,CONFIG)
 from factory_augmentations import (TwoCropTransform, basic_transforms,
                                    transforms_imagenet_eval,
                                    transforms_imagenet_train,
@@ -21,7 +21,8 @@ from data_modules import FGVCAircraftDataModule,GroceryStoreDataModule,Cars196Da
 from lit_general_model_level0 import LitGeneralModellevel0
 from lit_hierarchy_transformers import LitHierarchyTransformers
 
-from losses import ContrastiveLoss
+from losses import ContrastiveLossFG,CrosentropyStandar
+import torch.nn as nn
 
 def get_transform_function(transforms:str,img_size:int,
                         #    config
@@ -78,14 +79,30 @@ def get_datamodule(name_dataset:str,batch_size:int,transform_fn,transform_fn_tes
                     )
     else: 
         raise ("choice a correct dataset")
+    
     dm.prepare_data()   
     dm.setup()
     return dm
 
-def get_losses_fn():
-    pass
+def get_losses_fn( config)->dict:
+    losses_fn={}
+    
+    if config.loss_crossentropy_standar:
+        losses_fn["crossentropy"]=CrosentropyStandar()
+    if config.loss_contrastive_standar:
+        losses_fn["contrastive_standar"]=NotImplementedError
+    if config.loss_contrastive_fg:
+        losses_fn["contrastive_fg"]=ContrastiveLossFG()
+    if config.loss_triplet:
+        losses_fn["triplet"]=NotImplementedError
+    if len(losses_fn)==0:
+        raise("select unless one loss")
+    
+    return losses_fn
+    
 
 def get_system( datamodule:pl.LightningDataModule,
+                criterions:dict,
                 architecture_type:str,
                 model_choice:str,
                 optim:str,
@@ -113,6 +130,7 @@ def get_system( datamodule:pl.LightningDataModule,
                                        )
     elif architecture_type==ArchitectureType.standar: 
         model=LitGeneralModellevel0(model_choice,
+                                    criterions,
                                     datamodule.classlevel,
                                     optim,
                                     lr,
@@ -148,7 +166,7 @@ def get_trainer(wandb_logger,config):
     #callbacks
     early_stopping=EarlyStopping(monitor='_val_loss_total',
                                  mode="min",
-                                patience=5,
+                                patience=8,
                                  verbose=True,
                                  check_finite =True
                                  )

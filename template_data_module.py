@@ -17,6 +17,7 @@ class TemplateDataModule(pl.LightningDataModule):
         self.batch_size = batch_size
         self.classlevel=classlevel
         self.loader=default_loader
+        super().__init__()
         
     # def prepare_data(self) -> None:
     #     return NotImplementedError    

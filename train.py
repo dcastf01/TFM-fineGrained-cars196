@@ -12,7 +12,7 @@ from pytorch_lightning.loggers import WandbLogger
 
 from config import CONFIG,create_config_dict
 
-from builders import get_datamodule,get_system, get_transform_function,get_trainer
+from builders import get_datamodule, get_losses_fn,get_system, get_transform_function,get_trainer
 from autotune import autotune_lr
 import os 
 
@@ -31,8 +31,9 @@ def main():
             config=config_dict
                 )
     config=wandb.config
+    print(config)
     wandb.run.name=config.experiment_name[:5]+" "+\
-                    datetime.datetime.utcnow().strftime("%Y-%m-%d %X")
+                    datetime.datetime.utcnow().strftime("%b %d %X")
                     
     wandb.run.notes=config.notes
     # wandb.run.save()
@@ -53,22 +54,34 @@ def main():
                       transform_fn_test
                       )
     
-
+    #get losses
+    
+    losses=get_losses_fn(config)
+    
+    
     #get system
-    model=get_system(dm,
-                     config.architecture_name,
-                     config.experiment_name,
-                     config.optim_name,
-                     config.lr,
-                     config.IMG_SIZE,
-                     config.PRETRAINED_MODEL,
-                     config.NUM_EPOCHS,
-                     steps_per_epoch=len(dm.train_dataloader())
+    model=get_system(   datamodule=dm,
+                        criterions=losses,
+                        architecture_type=config.architecture_name,
+                        model_choice= config.experiment_name,
+                        optim=config.optim_name,
+                        lr= config.lr,
+                        img_size=config.IMG_SIZE,
+                        pretrained=config.PRETRAINED_MODEL,
+                        epochs=config.NUM_EPOCHS,
+                        steps_per_epoch=len(dm.train_dataloader())
                      )
+    
     #create trainer
     trainer=get_trainer(wandb_logger,config)
     
-    model=autotune_lr(trainer,model,dm,get_auto_lr=config.AUTO_LR)
+    model=autotune_lr(trainer,
+                      model,
+                      dm,
+                      get_auto_lr=config.AUTO_LR,
+                      model_name=config.experiment_name,
+                      dataset_name=config.dataset_name
+                      )
 
     logging.info("empezando el entrenamiento")
     trainer.fit(model,datamodule=dm)
