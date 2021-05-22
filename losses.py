@@ -7,6 +7,7 @@ from __future__ import print_function
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from lightly.loss import SymNegCosineSimilarityLoss
 
 class ContrastiveLossFG(nn.Module):
     
@@ -38,7 +39,11 @@ class CrosentropyStandar(nn.Module):
         
     def forward(self,embbeding,preds,targets):
         return self.criterion(preds,targets)
+
     
+    
+    
+
 class SupConLoss(nn.Module):
     """Supervised Contrastive Learning: https://arxiv.org/pdf/2004.11362.pdf.
     It also supports the unsupervised contrastive loss in SimCLR"""
@@ -126,3 +131,6 @@ class SupConLoss(nn.Module):
         loss = loss.view(anchor_count, batch_size).mean()
 
         return loss
+    
+    
+    

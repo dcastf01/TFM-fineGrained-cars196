@@ -2,32 +2,38 @@
 import logging
 
 import pytorch_lightning as pl
+import torch.nn as nn
 from PIL import Image
 from pytorch_lightning.callbacks import LearningRateMonitor
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 from pytorch_lightning.plugins import DDPPlugin
 
-from config import (ArchitectureType, Dataset, ModelsAvailable,
-                    TransformsAvailable,CONFIG)
+from callbacks import AccuracyEnd
+from config import (CONFIG, ArchitectureType, CollateAvailable, Dataset,
+                    ModelsAvailable, TransformsAvailable)
+from data_modules import (Cars196DataModule, FGVCAircraftDataModule,
+                          GroceryStoreDataModule)
 from factory_augmentations import (TwoCropTransform, basic_transforms,
+                                   cars_test_transfroms_transFG,
+                                   cars_train_transfroms_transFG,
                                    transforms_imagenet_eval,
                                    transforms_imagenet_train,
-                                   transforms_noaug_train,
-                                   cars_train_transfroms_transFG,
-                                   cars_test_transfroms_transFG,
-                                   )
-from data_modules import FGVCAircraftDataModule,GroceryStoreDataModule,Cars196DataModule
+                                   transforms_noaug_train)
+from factory_collate import collate_two_images
 from lit_general_model_level0 import LitGeneralModellevel0
 from lit_hierarchy_transformers import LitHierarchyTransformers
+from losses import (ContrastiveLossFG, CrosentropyStandar,
+                    SymNegCosineSimilarityLoss)
 
-from losses import ContrastiveLossFG,CrosentropyStandar
-import torch.nn as nn
 
-def get_transform_function(transforms:str,img_size:int,
+def get_transform_collate_function(transforms:str,
+                                   img_size:int,
+                                   collate_fn:str
                         #    config
                            ):
     name_transform=TransformsAvailable[transforms.lower()]
+    name_collate=CollateAvailable[collate_fn.lower()]
     transform_fn_test=None
     if name_transform==TransformsAvailable.basic_transforms:
         transform_fn=basic_transforms(img_size=img_size)
@@ -45,13 +51,26 @@ def get_transform_function(transforms:str,img_size:int,
     # if config.two_crops
     #el transforms_magenet aplica un center crop de 0.875 el paper que estoy mirnado no lo usa
         transform_fn_test= transforms_imagenet_eval(img_size=img_size) 
-    return transform_fn,transform_fn_test
     
-def get_datamodule(name_dataset:str,batch_size:int,transform_fn,transform_fn_test):
+    if name_collate==CollateAvailable.collate_two_images:
+        collate_fn=collate_two_images(transform_fn)
+        transform_fn=None
+        
+    else:
+        collate_fn=None
+    
+    return transform_fn,transform_fn_test,collate_fn
+    
+def get_datamodule(name_dataset:str
+                   ,batch_size:int,
+                   transform_fn,
+                   transform_fn_test,
+                   collate_fn
+                   ):
 
     if isinstance(name_dataset,str):
         name_dataset=Dataset[name_dataset.lower()]
- 
+    
     if name_dataset==Dataset.grocerydataset:
         
         dm=GroceryStoreDataModule(
@@ -59,6 +78,7 @@ def get_datamodule(name_dataset:str,batch_size:int,transform_fn,transform_fn_tes
             batch_size=batch_size,
             transform_fn=transform_fn,
             transform_fn_test=transform_fn_test,
+            collate_fn=collate_fn
             )
         
     elif name_dataset==Dataset.fgvcaircraft:
@@ -67,6 +87,7 @@ def get_datamodule(name_dataset:str,batch_size:int,transform_fn,transform_fn_tes
             transform_fn_test=transform_fn_test,
             data_dir="data",
             batch_size=batch_size,
+            collate_fn=collate_fn
             )
     
     elif name_dataset==Dataset.cars196:
@@ -75,8 +96,10 @@ def get_datamodule(name_dataset:str,batch_size:int,transform_fn,transform_fn_tes
             transform_fn=transform_fn,
             transform_fn_test=transform_fn_test,
             data_dir="data",
-            batch_size=batch_size
+            batch_size=batch_size,
+            collate_fn=collate_fn
                     )
+    
     else: 
         raise ("choice a correct dataset")
     
@@ -95,11 +118,40 @@ def get_losses_fn( config)->dict:
         losses_fn["contrastive_fg"]=ContrastiveLossFG()
     if config.loss_triplet:
         losses_fn["triplet"]=NotImplementedError
+    if config.loss_cosine_similarity_simsiam:
+        losses_fn["similarity"]=SymNegCosineSimilarityLoss()
     if len(losses_fn)==0:
         raise("select unless one loss")
     
     return losses_fn
+def get_callbacks(config,dm):
+    #callbacks
     
+    early_stopping=EarlyStopping(monitor='_val_loss',
+                                 mode="min",
+                                patience=5,
+                                 verbose=True,
+                                 check_finite =True
+                                 )
+
+    checkpoint_callback = ModelCheckpoint(
+        monitor='_val_loss',
+        dirpath=config.PATH_CHECKPOINT,
+        filename= '-{epoch:02d}-{val_loss:.6f}',
+        mode="min",
+        save_last=True,
+        save_top_k=3,
+                        )
+    learning_rate_monitor=LearningRateMonitor(logging_interval="epoch")
+    
+    Accuracytest=AccuracyEnd(dm.test_dataloader(),prefix="test")
+    callbacks=[
+        Accuracytest,
+        learning_rate_monitor,
+        early_stopping,
+        
+            ]
+    return callbacks
 
 def get_system( datamodule:pl.LightningDataModule,
                 criterions:dict,
@@ -110,7 +162,8 @@ def get_system( datamodule:pl.LightningDataModule,
                 img_size:int,
                 pretrained:bool,
                 epochs:int,
-                steps_per_epoch:int
+                steps_per_epoch:int,
+                callbacks:list
 
                ):
     

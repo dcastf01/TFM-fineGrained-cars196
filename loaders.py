@@ -31,7 +31,7 @@ class Loader(Dataset):
         elif self.transform.__class__==transforms.transforms.Compose:
             img=self.transform(img)
         else:
-            raise ("not valid transform")
+            pass
         return img
 class GroceryStoreLoader(Loader):
     
@@ -66,15 +66,15 @@ class GroceryStoreLoader(Loader):
         
     
     def __getitem__(self, index):
-    
-        img_path=os.path.join(self.root_dir,self.data.iloc[index,0])
+        fname=self.data.iloc[index,0]
+        img_path=os.path.join(self.root_dir,fname)
         img=self.loader(img_path)
  
         label_level00=torch.tensor(int(self.data.iloc[index,1]))
         label_level0=torch.tensor(int(self.data.iloc[index,2]))
         img=self.apply_transform(img)
         
-        return img,(label_level0,label_level00)
+        return img,(label_level0,label_level00),fname
 
 class FGVCAircraftLoader(Loader):
     
@@ -128,8 +128,8 @@ class FGVCAircraftLoader(Loader):
         return df
 
     def __getitem__(self, index):
-    
-        img_path=os.path.join(self.root_images,self.data.iloc[index,0]+".jpg")
+        fname=self.data.iloc[index,0]
+        img_path=os.path.join(self.root_images,fname+".jpg")
         img=self.loader(img_path)
 
         label_level000=torch.tensor(int(self.data.iloc[index]["label000"]))
@@ -137,7 +137,7 @@ class FGVCAircraftLoader(Loader):
         label_level0=torch.tensor(int(self.data.iloc[index]["label0"]))
         
         img=self.apply_transform(img)
-        return img,(label_level0,label_level00,label_level000)
+        return img,(label_level0,label_level00,label_level000),fname
     
 class Cars196Loader(Loader):
     #https://github.com/phongdinhv/stanford-cars-model/blob/master/data_processing/data_loaders.py
@@ -172,7 +172,7 @@ class Cars196Loader(Loader):
         label_level00=torch.tensor(int(self.data.iloc[index]["label00"]))
         label_level0=torch.tensor(int(self.data.iloc[index]["label0"]))
         img=self.apply_transform(img)
-        return img,(label_level0,label_level00,label_level000)
+        return img,(label_level0,label_level00,label_level000),filename
     
     def _load_mat_file(self,path_mat):
         from scipy import io as mat_io

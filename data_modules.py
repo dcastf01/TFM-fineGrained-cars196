@@ -19,6 +19,7 @@ class FGVCAircraftDataModule(TemplateDataModule):
                  transform_fn_test,
                  data_dir: str = "data",
                 batch_size: int = 32,
+                collate_fn=None
                  ):
         
         self.root=data_dir
@@ -38,7 +39,8 @@ class FGVCAircraftDataModule(TemplateDataModule):
             transform_fn_test=transform_fn_test,
             data_dir=data_dir,
             batch_size=batch_size,
-            classlevel=classlevel
+            classlevel=classlevel,
+            collate_fn=collate_fn
                         )
         
     def prepare_data(self):
@@ -63,7 +65,8 @@ class FGVCAircraftDataModule(TemplateDataModule):
                           shuffle=True,
                           num_workers=CONFIG.NUM_WORKERS,
                           pin_memory=True,
-                          drop_last=False
+                          drop_last=False,
+                          collate_fn=self.collate_fn
                           )
 
     def val_dataloader(self):
@@ -104,7 +107,9 @@ class GroceryStoreDataModule(TemplateDataModule):
                  transform_fn,
                  transform_fn_test,
                  data_dir: str = "data",
-                 batch_size: int = 32):
+                 batch_size: int = 32,
+                 collate_fn=None
+                 ):
         
         data_dir = os.path.join(data_dir,"GroceryStoreDataset")
         self.batch_size = batch_size
@@ -118,7 +123,8 @@ class GroceryStoreDataModule(TemplateDataModule):
             transform_fn_test=transform_fn_test,
             data_dir=data_dir,
             batch_size=batch_size,
-            classlevel=classlevel
+            classlevel=classlevel,
+            collate_fn=collate_fn
             
                         )
     def prepare_data(self):
@@ -140,7 +146,8 @@ class GroceryStoreDataModule(TemplateDataModule):
                           shuffle=True,
                           num_workers=CONFIG.NUM_WORKERS,
                           pin_memory=True,
-                          drop_last=False
+                          drop_last=False,
+                          collate_fn=self.collate_fn
                           )
 
     def val_dataloader(self):
@@ -161,7 +168,13 @@ class GroceryStoreDataModule(TemplateDataModule):
 
 class Cars196DataModule(TemplateDataModule):
     
-    def __init__(self, transform_fn, transform_fn_test, data_dir: str, batch_size: int):
+    def __init__(self,
+                 transform_fn,
+                 transform_fn_test,
+                 data_dir: str, 
+                 batch_size: int,
+                 collate_fn=None
+                 ):
         
         self.root=os.path.join(data_dir,"cars196")
         self.img_folder_train=os.path.join(self.root,"cars_train")
@@ -188,16 +201,19 @@ class Cars196DataModule(TemplateDataModule):
                         'level000':49 ,
                             }
         
-        super().__init__(transform_fn, transform_fn_test, classlevel, data_dir=data_dir, batch_size=batch_size)
+        super().__init__(transform_fn,
+                         transform_fn_test,
+                         classlevel,
+                         data_dir=data_dir,
+                         batch_size=batch_size,
+                         collate_fn=collate_fn
+                         )
         
     def prepare_data(self):
         # manual download from 
         #https://ai.stanford.edu/~jkrause/cars/car_dataset.html
         
         self.download()
-        
-        
-        
         self.crop_images()
         
     def setup(self, stage=None):
@@ -225,7 +241,8 @@ class Cars196DataModule(TemplateDataModule):
                           shuffle=True,
                           num_workers=CONFIG.NUM_WORKERS,
                           pin_memory=True,
-                          drop_last=False
+                          drop_last=False,
+                          collate_fn=self.collate_fn                          
                           )
 
     def val_dataloader(self):

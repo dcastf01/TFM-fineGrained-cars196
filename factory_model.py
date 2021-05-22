@@ -36,7 +36,7 @@ def create_model(model_chosen:ModelsAvailable,
                 model.pre_classifier=model.forward_features
                 model.classifier=model.head
                 
-            elif model_chosen==ModelsAvailable.resnet50:
+            elif prefix_name==ModelsAvailable.resnet50.name[0:3]:
                 
                 model=timm.create_model(model_chosen.value,pretrained=pretrained,num_classes=num_classes)
                 model.pre_classifier=types.MethodType(resnet_forward_features,model)

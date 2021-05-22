@@ -14,6 +14,7 @@ class ModelsAvailable(Enum):
     vit_base_patch16_224_in21k="vit_base_patch16_224_in21k"
     vit_base_patch16_224_in21k_overlap="vit_base_patch16_224_in21k-overlap"
     resnet50="resnet50"
+    resnet101="resnet101"
     vit_large_patch16_224_in21k="vit_large_patch16_224_in21k"
     vit_large_patch32_224_in21k="vit_large_patch32_224_in21k"
     
@@ -31,6 +32,10 @@ class TransformsAvailable(Enum):
     timm_transforms_imagenet_train=3
     transforms_imagenet_eval=4
     cars_transfroms_transfg=5
+
+class CollateAvailable(Enum):
+    none=1
+    collate_two_images=2
 @dataclass
 class LossActive:
     
@@ -44,7 +49,7 @@ def create_config_dict(instance):
 @dataclass
 class CONFIG(object):
     
-    experiment=ModelsAvailable.vit_base_patch16_224_in21k
+    experiment=ModelsAvailable.resnet50
     experiment_name:str=experiment.name
 
     architecture =ArchitectureType.standar
@@ -53,6 +58,7 @@ class CONFIG(object):
     loss_crossentropy_standar:bool=True
     loss_contrastive_fg:bool=True
     loss_contrastive_standar:bool=False
+    loss_cosine_similarity_simsiam:bool=True
     loss_triplet:bool=False
     
     # experiment_net:str=experiment.value
@@ -63,7 +69,7 @@ class CONFIG(object):
     DEVICE: str = "cuda" if torch.cuda.is_available() else "cpu"
     # TRAIN_DIR = "data/train"
     # VAL_DIR = "data/val"
-    batch_size:int =20
+    batch_size:int =10
     
     dataset=Dataset.cars196
     dataset_name:str=dataset.name
@@ -73,6 +79,8 @@ class CONFIG(object):
     optim_name:str=optim.name
     transform=TransformsAvailable.cars_transfroms_transfg
     transform_name:str=transform.name
+    collate_fn=CollateAvailable.collate_two_images
+    collate_fn_name:str=collate_fn.name
     
     transform_to_test=TransformsAvailable.transforms_imagenet_eval
     transform_to_test:str=transform_to_test.name
@@ -80,17 +88,17 @@ class CONFIG(object):
     lr:float = 0.035
     AUTO_LR :bool= False
     # LAMBDA_IDENTITY = 0.0
-    NUM_WORKERS:int = 4
+    NUM_WORKERS:int = 0
     SEED:int=1
     IMG_SIZE:int=448
-    NUM_EPOCHS :int= 60
+    NUM_EPOCHS :int= 50
     # LOAD_MODEL :bool= True
     # SAVE_MODEL :bool= True
     PATH_CHECKPOINT: str= os.path.join(ROOT_WORKSPACE,"classification/model/checkpoint")
     
     gpu0:bool=True
     gpu1:bool=False
-    notes:str=" correr diferentes modelos para probar su funcionamiento"
+    notes:str="probando similitud loss"
     ignore_globs:str="*.ckpt"
     
     #hyperparameters

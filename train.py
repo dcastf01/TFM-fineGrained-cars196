@@ -2,20 +2,17 @@
 
 import datetime
 import logging
+import os
+
 import pytorch_lightning as pl
-
 import torch
-import wandb
-
 from pytorch_lightning.loggers import WandbLogger
 
-
-from config import CONFIG,create_config_dict
-
-from builders import get_datamodule, get_losses_fn,get_system, get_transform_function,get_trainer
+import wandb
 from autotune import autotune_lr
-import os 
-
+from builders import (get_callbacks, get_datamodule, get_losses_fn, get_system,
+                      get_trainer, get_transform_collate_function)
+from config import CONFIG, create_config_dict
 
 
 def main():
@@ -45,20 +42,24 @@ def main():
     
     #get transform_fn
     
-    transfrom_fn,transform_fn_test=get_transform_function(config.transform_name,
-                                        config.IMG_SIZE)
+    transfrom_fn,transform_fn_test,collate_fn=get_transform_collate_function(
+        config.transform_name,
+        config.IMG_SIZE,
+        config.collate_fn_name
+        )
     #get datamodule
     dm=get_datamodule(config.dataset_name,
                       config.batch_size,
                       transfrom_fn,
-                      transform_fn_test
+                      transform_fn_test,
+                      collate_fn
                       )
     
     #get losses
-    
     losses=get_losses_fn(config)
     
-    
+    #get callbacks 
+    callbacks=get_callbacks(config,dm)
     #get system
     model=get_system(   datamodule=dm,
                         criterions=losses,
@@ -69,7 +70,8 @@ def main():
                         img_size=config.IMG_SIZE,
                         pretrained=config.PRETRAINED_MODEL,
                         epochs=config.NUM_EPOCHS,
-                        steps_per_epoch=len(dm.train_dataloader())
+                        steps_per_epoch=len(dm.train_dataloader()),
+                        callbacks=callbacks
                      )
     
     #create trainer
