@@ -12,11 +12,13 @@ class ArchitectureType(Enum):
 class ModelsAvailable(Enum):
     hierarchicaltransformers="version_con_multiples_heads"
     vit_base_patch16_224_in21k="vit_base_patch16_224_in21k"
+    vit_base_patch16_384="vit_base_patch16_384"
     vit_base_patch16_224_in21k_overlap="vit_base_patch16_224_in21k-overlap"
     resnet50="resnet50"
     resnet101="resnet101"
     vit_large_patch16_224_in21k="vit_large_patch16_224_in21k"
     vit_large_patch32_224_in21k="vit_large_patch32_224_in21k"
+    vit_base_patch16_224_miil_in21k="vit_base_patch16_224_miil_in21k"
     
 class Dataset (Enum):
     grocerydataset=1
@@ -56,9 +58,9 @@ class CONFIG(object):
     architecture_name:str=architecture.name
     
     loss_crossentropy_standar:bool=True
-    loss_contrastive_fg:bool=False
+    loss_contrastive_fg:bool=True
     loss_contrastive_standar:bool=False
-    loss_cosine_similarity_simsiam:bool=True
+    loss_cosine_similarity_simsiam:bool=False
     loss_triplet:bool=False
     
     # experiment_net:str=experiment.value
@@ -79,7 +81,7 @@ class CONFIG(object):
     optim_name:str=optim.name
     transform=TransformsAvailable.cars_transfroms_transfg
     transform_name:str=transform.name
-    collate_fn=CollateAvailable.collate_two_images
+    collate_fn=CollateAvailable.none
     collate_fn_name:str=collate_fn.name
     
     transform_to_test=TransformsAvailable.transforms_imagenet_eval
@@ -91,13 +93,13 @@ class CONFIG(object):
     NUM_WORKERS:int = 4
     SEED:int=1
     IMG_SIZE:int=448
-    NUM_EPOCHS :int= 50
+    NUM_EPOCHS :int= 75
     # LOAD_MODEL :bool= True
     # SAVE_MODEL :bool= True
     PATH_CHECKPOINT: str= os.path.join(ROOT_WORKSPACE,"classification/model/checkpoint")
     
-    gpu0:bool=False
-    gpu1:bool=True
+    gpu0:bool=True
+    gpu1:bool=False
     notes:str="probando similitud loss"
     ignore_globs:str="*.ckpt"
     

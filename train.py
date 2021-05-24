@@ -45,7 +45,8 @@ def main():
     transfrom_fn,transform_fn_test,collate_fn=get_transform_collate_function(
         config.transform_name,
         config.IMG_SIZE,
-        config.collate_fn_name
+        config.collate_fn_name,
+        config.experiment_name,
         )
     #get datamodule
     dm=get_datamodule(config.dataset_name,

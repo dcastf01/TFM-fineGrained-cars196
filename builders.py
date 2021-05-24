@@ -19,7 +19,8 @@ from factory_augmentations import (TwoCropTransform, basic_transforms,
                                    cars_train_transfroms_transFG,
                                    transforms_imagenet_eval,
                                    transforms_imagenet_train,
-                                   transforms_noaug_train)
+                                   transforms_noaug_train,
+                                   get_normalize_parameter_by_model)
 from factory_collate import collate_two_images
 from lit_general_model_level0 import LitGeneralModellevel0
 from lit_hierarchy_transformers import LitHierarchyTransformers
@@ -29,12 +30,14 @@ from losses import (ContrastiveLossFG, CrosentropyStandar,
 
 def get_transform_collate_function(transforms:str,
                                    img_size:int,
-                                   collate_fn:str
-                        #    config
+                                   collate_fn:str,
+                                   model_name:str
                            ):
+    model_enum=ModelsAvailable[model_name.lower()]
     name_transform=TransformsAvailable[transforms.lower()]
     name_collate=CollateAvailable[collate_fn.lower()]
     transform_fn_test=None
+    mean,std,interpolation=get_normalize_parameter_by_model(model_enum)
     if name_transform==TransformsAvailable.basic_transforms:
         transform_fn=basic_transforms(img_size=img_size)
     elif name_transform==TransformsAvailable.timm_transforms_imagenet_train:
@@ -44,8 +47,16 @@ def get_transform_collate_function(transforms:str,
         transform_fn=transforms_noaug_train(img_size=img_size)
     
     elif name_transform==TransformsAvailable.cars_transfroms_transfg:
-        transform_fn=cars_train_transfroms_transFG(img_size=img_size)
-        transform_fn_test=cars_test_transfroms_transFG(img_size=img_size)
+        transform_fn=cars_train_transfroms_transFG(img_size=img_size,
+                                                   mean=mean,
+                                                   std=std,
+                                                   interpolation=interpolation,
+                                                   )
+        transform_fn_test=cars_test_transfroms_transFG(img_size=img_size,
+                                                       mean=mean,
+                                                       std=std,
+                                                       interpolation=interpolation
+                                                       )
     
     if transform_fn_test is None:   
     # if config.two_crops
