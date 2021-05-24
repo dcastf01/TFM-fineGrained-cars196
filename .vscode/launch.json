@@ -14,7 +14,7 @@
             // "preLaunchTask": "launchenv",
             "cwd": "${workspaceFolder}",
             "env": { "PYTHONPATH": "${workspaceFolder}"},
-            "justMyCode": false,
+            "justMyCode": true,
             // "preLaunchTask": "prepare persistent terminal"
 
             

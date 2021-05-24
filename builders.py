@@ -124,12 +124,13 @@ def get_losses_fn( config)->dict:
         raise("select unless one loss")
     
     return losses_fn
+
 def get_callbacks(config,dm):
     #callbacks
     
     early_stopping=EarlyStopping(monitor='_val_loss',
                                  mode="min",
-                                patience=5,
+                                patience=10,
                                  verbose=True,
                                  check_finite =True
                                  )

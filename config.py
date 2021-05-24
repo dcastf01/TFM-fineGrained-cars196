@@ -49,14 +49,14 @@ def create_config_dict(instance):
 @dataclass
 class CONFIG(object):
     
-    experiment=ModelsAvailable.resnet50
+    experiment=ModelsAvailable.vit_base_patch16_224_in21k_overlap
     experiment_name:str=experiment.name
 
     architecture =ArchitectureType.standar
     architecture_name:str=architecture.name
     
     loss_crossentropy_standar:bool=True
-    loss_contrastive_fg:bool=True
+    loss_contrastive_fg:bool=False
     loss_contrastive_standar:bool=False
     loss_cosine_similarity_simsiam:bool=True
     loss_triplet:bool=False
@@ -69,9 +69,9 @@ class CONFIG(object):
     DEVICE: str = "cuda" if torch.cuda.is_available() else "cpu"
     # TRAIN_DIR = "data/train"
     # VAL_DIR = "data/val"
-    batch_size:int =10
+    batch_size:int =9
     
-    dataset=Dataset.cars196
+    dataset=Dataset.fgvcaircraft
     dataset_name:str=dataset.name
     precision_compute:int=16
     
@@ -88,7 +88,7 @@ class CONFIG(object):
     lr:float = 0.035
     AUTO_LR :bool= False
     # LAMBDA_IDENTITY = 0.0
-    NUM_WORKERS:int = 0
+    NUM_WORKERS:int = 4
     SEED:int=1
     IMG_SIZE:int=448
     NUM_EPOCHS :int= 50
@@ -96,8 +96,8 @@ class CONFIG(object):
     # SAVE_MODEL :bool= True
     PATH_CHECKPOINT: str= os.path.join(ROOT_WORKSPACE,"classification/model/checkpoint")
     
-    gpu0:bool=True
-    gpu1:bool=False
+    gpu0:bool=False
+    gpu1:bool=True
     notes:str="probando similitud loss"
     ignore_globs:str="*.ckpt"
     

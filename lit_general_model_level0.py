@@ -34,7 +34,7 @@ class LitGeneralModellevel0(LitSystem):
                          steps_per_epoch=steps_per_epoch)
         num_classes=class_level["level0"]
         #puede que loss_fn no vaya aquí y aquí solo vaya modelo
-        self.model=create_model(model_name,img_size,num_classes,pretrained)
+        
                 
         self.criterions=criterions
         if "similarity" in self.criterions.keys():
@@ -43,7 +43,12 @@ class LitGeneralModellevel0(LitSystem):
         else:
             self.is_similitud_loss=False
         # nn.CrossEntropyLoss()
-
+        self.model=create_model(model_name,
+                                img_size,
+                                num_classes,
+                                pretrained,
+                                self.is_similitud_loss                        
+                                )
     def forward(self,x):
         y0=self.model(x)
         
@@ -66,18 +71,15 @@ class LitGeneralModellevel0(LitSystem):
             if self.is_similitud_loss:
                 f0,f1=f
                 f0 = f0.flatten(start_dim=1)
-                z0 = self.projection_mlp(f0)
-                p0 = self.prediction_mlp(z0)
+                z0 = self.model.projection_mlp(f0)
+                p0 = self.model.prediction_mlp(z0)
                 out0=(z0,p0)
                 f1 = f1.flatten(start_dim=1)
-                z1 = self.projection_mlp(f1)
-                p1 = self.prediction_mlp(z1)
+                z1 = self.model.projection_mlp(f1)
+                p1 = self.model.prediction_mlp(z1)
                 out1=(z1,p1)
                 loss[f"{split}_similarity"]=self.criterions["similarity"](out0,out1)
-  
-            
-                    
-                
+        
         else:
             target0=targets[0]
             loss,embbeding,y0=self.step_loss(images,target0,split)
@@ -89,6 +91,7 @@ class LitGeneralModellevel0(LitSystem):
     
     def step_loss(self,x,targets,split):   
         embbeding=self.model.pre_classifier(x)
+
         y0=self.model.classifier(embbeding)
         loss={}
         for key,criterion in self.criterions.items():
