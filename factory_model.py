@@ -7,11 +7,21 @@ import timm
 import torch
 
 import types
+from models.layers import _projection_mlp,_prediction_mlp
+from models.trasnfg import CONFIGS as vit_fg_config
 
+
+
+
+#esto iria en la parte de create_model pero por ahora aquí se queda
+
+                
+                
 def create_model(model_chosen:ModelsAvailable,
-                    img_size:int,
-                    num_classes:int,
-                    pretrained:bool
+                img_size:int,
+                num_classes:int,
+                pretrained:bool,
+                is_loss_similarity_necessary:bool=False,
                     ):
             
             prefix_name=model_chosen.name[0:3]
@@ -35,19 +45,56 @@ def create_model(model_chosen:ModelsAvailable,
 
                 model.pre_classifier=model.forward_features
                 model.classifier=model.head
+                if is_loss_similarity_necessary:
+                    num_ftrs: int = 768
+                    proj_hidden_dim: int = 768
+                    pred_hidden_dim: int = 512
+                    out_dim: int = 768
+                    num_mlp_layers: int = 3
+                    create_layers_to_similitud_loss(model,num_ftrs,
+                                                    proj_hidden_dim,pred_hidden_dim,out_dim,
+                                                    num_mlp_layers)
                 
             elif prefix_name==ModelsAvailable.resnet50.name[0:3]:
                 
                 model=timm.create_model(model_chosen.value,pretrained=pretrained,num_classes=num_classes)
                 model.pre_classifier=types.MethodType(resnet_forward_features,model)
                 model.classifier=model.fc
+                if is_loss_similarity_necessary:
+                    num_ftrs: int = 2048
+                    proj_hidden_dim: int = 2048
+                    pred_hidden_dim: int = 512
+                    out_dim: int = 2048
+                    num_mlp_layers: int = 3
+                    create_layers_to_similitud_loss(model,num_ftrs,
+                                                    proj_hidden_dim,pred_hidden_dim,out_dim,
+                                                    num_mlp_layers)    
+            
             return model
+
+def create_layers_to_similitud_loss(model,
+                                    num_ftrs: int = 2048,
+                                    proj_hidden_dim: int = 2048,
+                                    pred_hidden_dim: int = 512,
+                                    out_dim: int = 2048,
+                                    num_mlp_layers: int = 3,
+                ):
+
+
+    model.projection_mlp = \
+        _projection_mlp(num_ftrs, proj_hidden_dim, out_dim, num_mlp_layers)
+
+    model.prediction_mlp = \
+        _prediction_mlp(out_dim, pred_hidden_dim, out_dim)
+    return model
+
 def resnet_forward_features(self,x):
     x=self.forward_features(x)
     x = self.global_pool(x)
     if self.drop_rate:
         x = F.dropout(x, p=float(self.drop_rate), training=self.training)
     return x
+
 def resnet_classifier(self,x):
     
     x = self.fc(x)
@@ -83,3 +130,4 @@ class PatchEmbed(nn.Module):
         x = self.proj(x).flatten(2).transpose(1, 2)
         x = self.norm(x)
         return x
+    

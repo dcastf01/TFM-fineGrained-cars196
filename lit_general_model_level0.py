@@ -10,10 +10,9 @@ from torch.nn import functional as F
 
 from config import ModelsAvailable
 from lit_system import LitSystem
-
 from factory_model import create_model
 from lightly.loss import SymNegCosineSimilarityLoss
-from layers import _projection_mlp,_prediction_mlp
+
 class LitGeneralModellevel0(LitSystem):
     def __init__(self,
                  model_name:ModelsAvailable,
@@ -40,17 +39,7 @@ class LitGeneralModellevel0(LitSystem):
         self.criterions=criterions
         if "similarity" in self.criterions.keys():
             self.is_similitud_loss=True
-            num_ftrs: int = 2048
-            proj_hidden_dim: int = 2048
-            pred_hidden_dim: int = 512
-            out_dim: int = 2048
-            num_mlp_layers: int = 3
-            #esto iria en la parte de create_model pero por ahora aquí se queda
-            self.projection_mlp = \
-                _projection_mlp(num_ftrs, proj_hidden_dim, out_dim, num_mlp_layers)
-
-            self.prediction_mlp = \
-                _prediction_mlp(out_dim, pred_hidden_dim, out_dim)
+            
         else:
             self.is_similitud_loss=False
         # nn.CrossEntropyLoss()
