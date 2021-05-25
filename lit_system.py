@@ -8,7 +8,7 @@ import torch.nn as nn
 from config import Optim
 from metrics import get_metrics_collections_base
 
-
+import logging
 class LitSystem(pl.LightningModule):
     def __init__(self,
                  class_level,
@@ -46,7 +46,7 @@ class LitSystem(pl.LightningModule):
         elif self.optim==Optim.sgd:
             optimizer= torch.optim.SGD(self.parameters(), lr=self.lr,momentum=0.9)
         # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=range(15,100,10),gamma=0.95)
-        scheduler=WarmupCosineSchedule(optimizer,warmup_steps=5,t_total=self.epochs)
+        scheduler=WarmupCosineSchedule(optimizer,warmup_steps=int(self.epochs*0.1),t_total=self.epochs)
         # scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer,
         #                                                  max_lr=self.lr, steps_per_epoch=self.steps_per_epoch,
         #                                 epochs=self.epochs, pct_start=0.2, cycle_momentum=False, div_factor=20)
@@ -73,7 +73,29 @@ class LitSystem(pl.LightningModule):
             
         return data_dict_aux
     
+    def calculate_metrics(self,y0,target,split_metric,):
 
+        preds0_probability=y0.softmax(dim=1)
+            
+        try:
+            data_dict=split_metric["level0"](preds0_probability,target)
+            self.insert_each_metric_value_into_dict(data_dict,prefix="")
+    
+        except Exception as e:
+            print(e)
+            sum_by_batch=torch.sum(preds0_probability,dim=1)
+            logging.error("la suma de las predicciones da distintos de 1, procedemos a imprimir el primer elemento")
+            print(sum_by_batch)
+            print(e)
+            
+    def calculate_loss_total(self,loss:dict,split:str):
+        loss_total=sum(loss.values())
+        data_dict={
+                    f"{split}_loss_total":loss_total,
+                    **loss,
+                    }
+        self.insert_each_metric_value_into_dict(data_dict,prefix="")
+        return loss_total
 import math
 
 from torch.optim.lr_scheduler import LambdaLR

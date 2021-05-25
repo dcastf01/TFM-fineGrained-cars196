@@ -4,6 +4,7 @@ from lightly.data.collate import BaseCollateFunction
 from typing import List
 from factory_augmentations import cars_train_transfroms_transFG
 import torch
+from timm.data.mixup import FastCollateMixup
 def collate_two_images(transform):
     # transform=cars_train_transfroms_transFG(img_size=img_size)
     collate_fn=BaseCollateFunction(transform)                        
@@ -13,6 +14,15 @@ def collate_two_images(transform):
 def collate_triplet_loss(transform):
     return TripletCollateFunction(transform)
 
+
+def collate_mixup():
+    collate_fn=FastCollateMixup(mixup_alpha=0.3,
+                                cutmix_alpha=0.3,
+                                prob=0.75,
+                                num_classes=100 #ver como modificar de forma semiautomatica
+                                )
+    
+    
 class TripletCollateFunction(nn.Module):
     def __init__(self) -> None:
         super().__init__()

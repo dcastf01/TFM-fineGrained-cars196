@@ -98,33 +98,9 @@ class LitGeneralModellevel0(LitSystem):
             if not isinstance(criterion,SymNegCosineSimilarityLoss):
                 loss[f"{split}_{key}"]=criterion(embbeding,y0,targets)
         
-        
         return loss,embbeding,y0
     
-    def calculate_loss_total(self,loss:dict,split:str):
-        loss_total=sum(loss.values())
-        data_dict={
-                    f"{split}_loss_total":loss_total,
-                    **loss,
-                    }
-        self.insert_each_metric_value_into_dict(data_dict,prefix="")
-        return loss_total
-    
-    def calculate_metrics(self,y0,target,split_metric,):
-
-        preds0_probability=y0.softmax(dim=1)
-            
-        try:
-            data_dict=split_metric["level0"](preds0_probability,target)
-            self.insert_each_metric_value_into_dict(data_dict,prefix="")
-    
-        except Exception as e:
-            print(e)
-            sum_by_batch=torch.sum(preds0_probability,dim=1)
-            logging.error("la suma de las predicciones da distintos de 1, procedemos a imprimir el primer elemento")
-            print(sum_by_batch)
-            print(e)
-        
+ 
     def training_step(self,batch,batch_idx):
         
         images,targets,_=batch
@@ -139,4 +115,8 @@ class LitGeneralModellevel0(LitSystem):
 
         loss_total=self.train_val_steps(images,targets,self.valid_metrics_base,"val")
 
-            
+    def test_step(self, batch, batch_idx):
+        '''used for logging metrics'''
+        images,targets,_=batch
+
+        loss_total=self.train_val_steps(images,targets,self.valid_metrics_base,"test")

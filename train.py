@@ -47,6 +47,7 @@ def main():
         config.IMG_SIZE,
         config.collate_fn_name,
         config.experiment_name,
+        
         )
     #get datamodule
     dm=get_datamodule(config.dataset_name,
@@ -72,11 +73,11 @@ def main():
                         pretrained=config.PRETRAINED_MODEL,
                         epochs=config.NUM_EPOCHS,
                         steps_per_epoch=len(dm.train_dataloader()),
-                        callbacks=callbacks
+                        
                      )
     
     #create trainer
-    trainer=get_trainer(wandb_logger,config)
+    trainer=get_trainer(wandb_logger,callbacks,config)
     
     model=autotune_lr(trainer,
                       model,
@@ -88,6 +89,7 @@ def main():
 
     logging.info("empezando el entrenamiento")
     trainer.fit(model,datamodule=dm)
+    trainer.test(test_dataloaders=dm.test_dataloader())
 
 
 if __name__=="__main__":

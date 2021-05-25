@@ -59,7 +59,7 @@ def create_model(model_chosen:ModelsAvailable,
             elif prefix_name==ModelsAvailable.resnet50.name[0:3]:
                 
                 model=timm.create_model(model_chosen.value,pretrained=pretrained,num_classes=num_classes)
-                model.pre_classifier=types.MethodType(resnet_forward_features,model)
+                model.pre_classifier=types.MethodType(standar_timm_forward_features,model)
                 model.classifier=model.fc
                 if is_loss_similarity_necessary:
                     num_ftrs: int = 2048
@@ -70,6 +70,20 @@ def create_model(model_chosen:ModelsAvailable,
                     model=create_layers_to_similitud_loss(model,num_ftrs,
                                                     proj_hidden_dim,pred_hidden_dim,out_dim,
                                                     num_mlp_layers)    
+            
+            elif prefix_name==ModelsAvailable.tf_efficientnet_b4_ns.name[0:3]:
+                model=timm.create_model(model_chosen.value,pretrained=pretrained,num_classes=num_classes)
+                model.pre_classifier=types.MethodType(standar_timm_forward_features,model)
+                model.classifier=model.classifier
+                if is_loss_similarity_necessary:
+                    num_ftrs: int = 1280
+                    proj_hidden_dim: int = 1280
+                    pred_hidden_dim: int = 512
+                    out_dim: int = 1280
+                    num_mlp_layers: int = 3
+                    model=create_layers_to_similitud_loss(model,num_ftrs,
+                                                    proj_hidden_dim,pred_hidden_dim,out_dim,
+                                                    num_mlp_layers)
             
             return model
 
@@ -89,14 +103,14 @@ def create_layers_to_similitud_loss(model,
         _prediction_mlp(out_dim, pred_hidden_dim, out_dim)
     return model
 
-def resnet_forward_features(self,x):
+def standar_timm_forward_features(self,x):
     x=self.forward_features(x)
     x = self.global_pool(x)
     if self.drop_rate:
         x = F.dropout(x, p=float(self.drop_rate), training=self.training)
     return x
 
-def resnet_classifier(self,x):
+def standar_timm_classifier(self,x):
     
     x = self.fc(x)
     return x

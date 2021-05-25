@@ -9,16 +9,22 @@ from config import ModelsAvailable
 
 def get_normalize_parameter_by_model(model_enum:ModelsAvailable):
     prefix_name=model_enum.name[0:3]
-    if prefix_name==ModelsAvailable.vit_large_patch16_224_in21k.name[0:3] \
+    if model_enum==ModelsAvailable.vit_base_patch16_224_miil_in21k:
+        mean=(0,0,0)
+        std=(1, 1, 1)
+        interpolation=Image.BILINEAR
+    elif model_enum.name.split("_")[-1]=="overlap":
+        mean=IMAGENET_DEFAULT_MEAN
+        std=IMAGENET_DEFAULT_STD
+        interpolation=Image.BILINEAR
+        
+    elif prefix_name==ModelsAvailable.vit_large_patch16_224_in21k.name[0:3] \
         and model_enum!=ModelsAvailable.vit_base_patch16_224_miil_in21k:
         
         mean=(0.5,0.5,0.5)
         std=(0.5, 0.5, 0.5)
         interpolation=Image.BICUBIC
-    elif model_enum==ModelsAvailable.vit_base_patch16_224_miil_in21k:
-        mean=(0,0,0)
-        std=(1, 1, 1)
-        interpolation=Image.BILINEAR
+
     else:
         mean=IMAGENET_DEFAULT_MEAN
         std=IMAGENET_DEFAULT_STD
@@ -28,7 +34,7 @@ def get_normalize_parameter_by_model(model_enum:ModelsAvailable):
 def cars_train_transfroms_transFG(img_size:int=448,
                                   mean:list=IMAGENET_DEFAULT_MEAN,
                                   std:list=IMAGENET_DEFAULT_STD,
-                                  interpolation=Image.Bilinear,
+                                  interpolation=Image.BILINEAR,
                                   ):
     transform=transforms.Compose([
                                     transforms.Resize((600, 600), interpolation),

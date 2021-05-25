@@ -8,7 +8,7 @@ ROOT_WORKSPACE: str=""
 class ArchitectureType(Enum):
     standar="models normal"
     hierarchical="loss_con_hierarchical"
-    constrastive="contrastive"
+    api_model="api_model"
 class ModelsAvailable(Enum):
     hierarchicaltransformers="version_con_multiples_heads"
     vit_base_patch16_224_in21k="vit_base_patch16_224_in21k"
@@ -19,6 +19,7 @@ class ModelsAvailable(Enum):
     vit_large_patch16_224_in21k="vit_large_patch16_224_in21k"
     vit_large_patch32_224_in21k="vit_large_patch32_224_in21k"
     vit_base_patch16_224_miil_in21k="vit_base_patch16_224_miil_in21k"
+    tf_efficientnet_b4_ns="tf_efficientnet_b4_ns"
     
 class Dataset (Enum):
     grocerydataset=1
@@ -38,6 +39,7 @@ class TransformsAvailable(Enum):
 class CollateAvailable(Enum):
     none=1
     collate_two_images=2
+    mixup=3
 @dataclass
 class LossActive:
     
@@ -51,14 +53,14 @@ def create_config_dict(instance):
 @dataclass
 class CONFIG(object):
     
-    experiment=ModelsAvailable.vit_base_patch16_224_in21k_overlap
+    experiment=ModelsAvailable.resnet50
     experiment_name:str=experiment.name
 
-    architecture =ArchitectureType.standar
+    architecture =ArchitectureType.api_model
     architecture_name:str=architecture.name
     
     loss_crossentropy_standar:bool=True
-    loss_contrastive_fg:bool=True
+    loss_contrastive_fg:bool=False
     loss_contrastive_standar:bool=False
     loss_cosine_similarity_simsiam:bool=False
     loss_triplet:bool=False
@@ -71,16 +73,17 @@ class CONFIG(object):
     DEVICE: str = "cuda" if torch.cuda.is_available() else "cpu"
     # TRAIN_DIR = "data/train"
     # VAL_DIR = "data/val"
-    batch_size:int =9
+    batch_size:int =50
     
     dataset=Dataset.fgvcaircraft
     dataset_name:str=dataset.name
-    precision_compute:int=16
+    precision_compute:int=32
     
     optim=Optim.sgd
     optim_name:str=optim.name
     transform=TransformsAvailable.cars_transfroms_transfg
     transform_name:str=transform.name
+    
     collate_fn=CollateAvailable.none
     collate_fn_name:str=collate_fn.name
     
@@ -93,7 +96,7 @@ class CONFIG(object):
     NUM_WORKERS:int = 4
     SEED:int=1
     IMG_SIZE:int=448
-    NUM_EPOCHS :int= 75
+    NUM_EPOCHS :int= 50
     # LOAD_MODEL :bool= True
     # SAVE_MODEL :bool= True
     PATH_CHECKPOINT: str= os.path.join(ROOT_WORKSPACE,"classification/model/checkpoint")

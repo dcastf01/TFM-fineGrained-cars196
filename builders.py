@@ -2,6 +2,7 @@
 import logging
 
 import pytorch_lightning as pl
+from pytorch_lightning import callbacks
 import torch.nn as nn
 from PIL import Image
 from pytorch_lightning.callbacks import LearningRateMonitor
@@ -20,18 +21,19 @@ from factory_augmentations import (TwoCropTransform, basic_transforms,
                                    transforms_imagenet_eval,
                                    transforms_imagenet_train,
                                    transforms_noaug_train,
-                                   get_normalize_parameter_by_model)
-from factory_collate import collate_two_images
+                                   get_normalize_parameter_by_model,
+                                   )
+from factory_collate import collate_two_images,collate_mixup
 from lit_general_model_level0 import LitGeneralModellevel0
 from lit_hierarchy_transformers import LitHierarchyTransformers
 from losses import (ContrastiveLossFG, CrosentropyStandar,
                     SymNegCosineSimilarityLoss)
 
-
+from lit_api_model import LitApi
 def get_transform_collate_function(transforms:str,
                                    img_size:int,
                                    collate_fn:str,
-                                   model_name:str
+                                   model_name:str,
                            ):
     model_enum=ModelsAvailable[model_name.lower()]
     name_transform=TransformsAvailable[transforms.lower()]
@@ -66,7 +68,8 @@ def get_transform_collate_function(transforms:str,
     if name_collate==CollateAvailable.collate_two_images:
         collate_fn=collate_two_images(transform_fn)
         transform_fn=None
-        
+    elif name_collate==CollateAvailable.mixup:
+        collate_fn=collate_mixup()
     else:
         collate_fn=None
     
@@ -160,7 +163,7 @@ def get_callbacks(config,dm):
     callbacks=[
         Accuracytest,
         learning_rate_monitor,
-        early_stopping,
+        # early_stopping,
         
             ]
     return callbacks
@@ -175,7 +178,7 @@ def get_system( datamodule:pl.LightningDataModule,
                 pretrained:bool,
                 epochs:int,
                 steps_per_epoch:int,
-                callbacks:list
+                
 
                ):
     
@@ -204,6 +207,17 @@ def get_system( datamodule:pl.LightningDataModule,
                                     epochs,
                                     steps_per_epoch
                                     )
+    elif architecture_type==ArchitectureType.api_model:
+        model=LitApi(model_choice,
+                                    criterions,
+                                    datamodule.classlevel,
+                                    optim,
+                                    lr,
+                                    img_size,
+                                    pretrained,
+                                    epochs,
+                                    steps_per_epoch
+                                    )
     
     else:
         raise NotImplementedError
@@ -211,7 +225,9 @@ def get_system( datamodule:pl.LightningDataModule,
 
     return model
 
-def get_trainer(wandb_logger,config):
+def get_trainer(wandb_logger,
+                callbacks:list,
+                config):
     
     gpus=[]
     if config.gpu0:
@@ -228,24 +244,6 @@ def get_trainer(wandb_logger,config):
         accelerator=None
         plugins=None
         
-    #callbacks
-    early_stopping=EarlyStopping(monitor='_val_loss_total',
-                                 mode="min",
-                                patience=8,
-                                 verbose=True,
-                                 check_finite =True
-                                 )
-
-    checkpoint_callback = ModelCheckpoint(
-        monitor='_val_loss_total',
-        dirpath=config.PATH_CHECKPOINT,
-        filename= '-{epoch:02d}-{val_loss:.6f}',
-        mode="min",
-        save_last=True,
-        save_top_k=3,
-                        )
-    learning_rate_monitor=LearningRateMonitor(logging_interval="epoch")
-        
     trainer=pl.Trainer(
                     logger=wandb_logger,
                        gpus=gpus,
@@ -256,15 +254,10 @@ def get_trainer(wandb_logger,config):
                     #    val_check_interval=1,
                         auto_lr_find=config.AUTO_LR,
                        log_gpu_memory=True,
-                    #    distributed_backend=distributed_backend,
-                    #    accelerator=accelerator,
-                    #    plugins=plugins,
-                       callbacks=[
-                            early_stopping ,
-                            # checkpoint_callback,
-                            # confusion_matrix_wandb,
-                            learning_rate_monitor 
-                                  ],
+                       distributed_backend=distributed_backend,
+                       accelerator=accelerator,
+                       plugins=plugins,
+                       callbacks=callbacks,
                        progress_bar_refresh_rate=5,
                        
                        )
