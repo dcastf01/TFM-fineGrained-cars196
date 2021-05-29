@@ -27,8 +27,9 @@ def create_model(model_chosen:ModelsAvailable,
                     config=vit_fg_config["ViT-B_16"]
                     
                     model=VisionTransformer(config,img_size,zero_head=True,num_classes=num_classes)
-                    pretrained_dir="/home/dcast/Hierarchy-label-transformers/models/ViT-B_16.npz"
-                    model.load_from(np.load(pretrained_dir))
+                    if pretrained:
+                        pretrained_dir="/home/dcast/Hierarchy-label-transformers/models/ViT-B_16.npz"
+                        model.load_from(np.load(pretrained_dir))
                     # if pretrained_dir is not None:
                     #     a=torch.load(pretrained_dir)
                     #     pretrained_model = torch.load(pretrained_dir)['model']
@@ -84,6 +85,11 @@ def create_model(model_chosen:ModelsAvailable,
                     model=create_layers_to_similitud_loss(model,num_ftrs,
                                                     proj_hidden_dim,pred_hidden_dim,out_dim,
                                                     num_mlp_layers)
+            
+            elif prefix_name==ModelsAvailable.densenet121.name[0:3]:
+                model=timm.create_model(model_chosen.value,pretrained=pretrained,num_classes=num_classes)
+                model.pre_classifier=types.MethodType(standar_timm_forward_features,model)
+                model.classifier=model.classifier
             
             return model
 

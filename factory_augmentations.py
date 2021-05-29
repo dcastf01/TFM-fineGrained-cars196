@@ -31,7 +31,7 @@ def get_normalize_parameter_by_model(model_enum:ModelsAvailable):
         interpolation=Image.BICUBIC
     return mean,std,interpolation
 
-def cars_train_transfroms_transFG(img_size:int=448,
+def cars_train_transfroms_autoaugment(img_size:int=448,
                                   mean:list=IMAGENET_DEFAULT_MEAN,
                                   std:list=IMAGENET_DEFAULT_STD,
                                   interpolation=Image.BILINEAR,
@@ -47,7 +47,7 @@ def cars_train_transfroms_transFG(img_size:int=448,
                        )                            
     return transform
     
-def cars_test_transfroms_transFG(img_size:int=448,
+def cars_test_transforms(img_size:int=448,
                                   mean:list=IMAGENET_DEFAULT_MEAN,
                                   std:list=IMAGENET_DEFAULT_STD,
                                   interpolation=Image.BILINEAR,
@@ -60,21 +60,17 @@ def cars_test_transfroms_transFG(img_size:int=448,
                             )                 
     return transform
 
-def basic_transforms(img_size:int=224):
-    basic_transform=A.Compose(
-            [
-                A.Resize(img_size,img_size),
-                A.Normalize(
-                    # mean=[0, 0, 0],
-                    mean=[IMAGENET_DEFAULT_MEAN[0], IMAGENET_DEFAULT_MEAN[1], IMAGENET_DEFAULT_MEAN[2]],
-                    # std=[1, 1, 1],
-                    std=[IMAGENET_DEFAULT_STD[0], IMAGENET_DEFAULT_STD[1], IMAGENET_DEFAULT_STD[2]],
-                    max_pixel_value=255,
-                    ),
-                ToTensorV2(),
-                    ]
-                    
-                    )
+def cars_train_transforms_basic(img_size:int=224,
+                     mean:list=IMAGENET_DEFAULT_MEAN,
+                    std:list=IMAGENET_DEFAULT_STD,
+                    interpolation=Image.BILINEAR,
+                                  ):
+    basic_transform=transforms.Compose([
+                                    transforms.Resize((600, 600), interpolation),
+                                    transforms.CenterCrop((img_size, img_size)),
+                                    transforms.ToTensor(),
+                                    transforms.Normalize(IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD)]
+                            )
     return basic_transform
 
 class TwoCropTransform:

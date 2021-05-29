@@ -22,9 +22,9 @@ class API_Net(nn.Module):
         num_features=backbone.num_features
         self.conv = nn.Sequential(*layers)
         self.avg = nn.AvgPool2d(kernel_size=14, stride=1)
-        self.map1 = nn.Linear(2048 * 2, 512)
-        self.map2 = nn.Linear(512, 2048)
-        self.fc = nn.Linear(2048, 200)
+        self.map1 = nn.Linear(num_features * 2, 512)
+        self.map2 = nn.Linear(512, num_features)
+        self.fc = nn.Linear(num_features, 200)
         self.drop = nn.Dropout(p=0.5)
         self.sigmoid = nn.Sigmoid()
 

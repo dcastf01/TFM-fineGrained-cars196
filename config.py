@@ -20,6 +20,9 @@ class ModelsAvailable(Enum):
     vit_large_patch32_224_in21k="vit_large_patch32_224_in21k"
     vit_base_patch16_224_miil_in21k="vit_base_patch16_224_miil_in21k"
     tf_efficientnet_b4_ns="tf_efficientnet_b4_ns"
+    tf_efficientnet_b5_ns="tf_efficientnet_b5_ns"
+    densenet121="densenet121"
+    densenet169="densenet169"
     
 class Dataset (Enum):
     grocerydataset=1
@@ -30,16 +33,25 @@ class Optim(Enum):
     sgd=2
 
 class TransformsAvailable(Enum):
-    basic_transforms=1
+    cars_train_transforms_basic=1
     timm_noaug=2
     timm_transforms_imagenet_train=3
     transforms_imagenet_eval=4
-    cars_transfroms_transfg=5
+    cars_train_transfroms_autoaugment=5
+    cars_transforms_eval=6
+    cars_only_mixup=7
+    cars_autoaugment_mixup=8
 
 class CollateAvailable(Enum):
     none=1
     collate_two_images=2
     mixup=3
+
+class FreezeLayersAvailable(Enum):
+    none=1
+    freeze_all_except_last=2
+    freeze_all_except_last_to_epoch25=3
+
 @dataclass
 class LossActive:
     
@@ -56,7 +68,7 @@ class CONFIG(object):
     experiment=ModelsAvailable.resnet50
     experiment_name:str=experiment.name
 
-    architecture =ArchitectureType.api_model
+    architecture =ArchitectureType.standar
     architecture_name:str=architecture.name
     
     loss_crossentropy_standar:bool=True
@@ -65,29 +77,30 @@ class CONFIG(object):
     loss_cosine_similarity_simsiam:bool=False
     loss_triplet:bool=False
     
+    freeze_layers =FreezeLayersAvailable.none
+    freeze_layers_name:str=freeze_layers.name
     # experiment_net:str=experiment.value
     PRETRAINED_MODEL:bool=True
     
-    transfer_learning:bool=False #solo se entrena el head ##no funcional en este repositorio aun
     #torch config
     DEVICE: str = "cuda" if torch.cuda.is_available() else "cpu"
     # TRAIN_DIR = "data/train"
     # VAL_DIR = "data/val"
     batch_size:int =50
     
-    dataset=Dataset.fgvcaircraft
+    dataset=Dataset.cars196
     dataset_name:str=dataset.name
-    precision_compute:int=32
+    precision_compute:int=16
     
     optim=Optim.sgd
     optim_name:str=optim.name
-    transform=TransformsAvailable.cars_transfroms_transfg
+    transform=TransformsAvailable.cars_only_mixup
     transform_name:str=transform.name
     
     collate_fn=CollateAvailable.none
     collate_fn_name:str=collate_fn.name
     
-    transform_to_test=TransformsAvailable.transforms_imagenet_eval
+    transform_to_test=TransformsAvailable.cars_transforms_eval
     transform_to_test:str=transform_to_test.name
     
     lr:float = 0.035
@@ -103,7 +116,7 @@ class CONFIG(object):
     
     gpu0:bool=True
     gpu1:bool=False
-    notes:str="probando similitud loss"
+    notes:str="TFM experiment3"
     ignore_globs:str="*.ckpt"
     
     #hyperparameters

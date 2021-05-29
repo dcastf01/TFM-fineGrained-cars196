@@ -1,0 +1,47 @@
+method: grid
+metric:
+  goal: maximize
+  name: _valid_level0Accuracy
+name: TFM experiment3
+parameters:
+  IMG_SIZE:
+    value: 448
+  NUM_EPOCHS:
+    value: 50
+  PRETRAINED_MODEL:
+    values:
+    - true
+  architecture_name:
+    value: standar
+  batch_size:
+    value: 50
+  dataset_name:
+    value: cars196
+  experiment_name:
+    distribution: categorical
+    values:
+    - tf_efficientnet_b4_ns
+    - resnet50
+  freeze_layers_name:
+    value: none
+  gpu0:
+    value: false
+  gpu1:
+    value: true
+  lr:
+    value: 0.0035
+  notes:
+    value: TFM experiment3
+  optim_name:
+    value: sgd
+  precision_compute:
+    value: 16
+  transform_name:
+    values:
+    - cars_train_transforms_basic
+    - cars_train_transfroms_autoaugment
+    - cars_only_mixup
+    - cars_autoaugment_mixup
+  transform_to_test:
+    value: cars_transforms_eval
+program: train.py

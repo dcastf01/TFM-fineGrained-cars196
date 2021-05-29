@@ -2,34 +2,34 @@
 import logging
 
 import pytorch_lightning as pl
-from pytorch_lightning import callbacks
 import torch.nn as nn
 from PIL import Image
+from pytorch_lightning import callbacks
 from pytorch_lightning.callbacks import LearningRateMonitor
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 from pytorch_lightning.plugins import DDPPlugin
 
-from callbacks import AccuracyEnd
+from callbacks import AccuracyEnd, FreezeLayers
 from config import (CONFIG, ArchitectureType, CollateAvailable, Dataset,
-                    ModelsAvailable, TransformsAvailable)
+                    ModelsAvailable, TransformsAvailable,FreezeLayersAvailable)
 from data_modules import (Cars196DataModule, FGVCAircraftDataModule,
                           GroceryStoreDataModule)
-from factory_augmentations import (TwoCropTransform, basic_transforms,
-                                   cars_test_transfroms_transFG,
-                                   cars_train_transfroms_transFG,
+from factory_augmentations import (TwoCropTransform, cars_test_transforms,
+                                   cars_train_transforms_basic,
+                                   cars_train_transfroms_autoaugment,
+                                   get_normalize_parameter_by_model,
                                    transforms_imagenet_eval,
                                    transforms_imagenet_train,
-                                   transforms_noaug_train,
-                                   get_normalize_parameter_by_model,
-                                   )
-from factory_collate import collate_two_images,collate_mixup
+                                   transforms_noaug_train)
+from factory_collate import collate_mixup, collate_two_images
+from lit_api_model import LitApi
 from lit_general_model_level0 import LitGeneralModellevel0
 from lit_hierarchy_transformers import LitHierarchyTransformers
 from losses import (ContrastiveLossFG, CrosentropyStandar,
                     SymNegCosineSimilarityLoss)
 
-from lit_api_model import LitApi
+
 def get_transform_collate_function(transforms:str,
                                    img_size:int,
                                    collate_fn:str,
@@ -40,30 +40,63 @@ def get_transform_collate_function(transforms:str,
     name_collate=CollateAvailable[collate_fn.lower()]
     transform_fn_test=None
     mean,std,interpolation=get_normalize_parameter_by_model(model_enum)
-    if name_transform==TransformsAvailable.basic_transforms:
-        transform_fn=basic_transforms(img_size=img_size)
+    if name_transform==TransformsAvailable.cars_train_transforms_basic:
+        transform_fn=cars_train_transforms_basic(img_size=img_size,
+                                        mean=mean,
+                                        std=std,
+                                        interpolation=interpolation)
     elif name_transform==TransformsAvailable.timm_transforms_imagenet_train:
         transform_fn=transforms_imagenet_train(img_size=img_size,interpolation=Image.BILINEAR,)
         
     elif name_transform==TransformsAvailable.timm_noaug:
         transform_fn=transforms_noaug_train(img_size=img_size)
     
-    elif name_transform==TransformsAvailable.cars_transfroms_transfg:
-        transform_fn=cars_train_transfroms_transFG(img_size=img_size,
+    elif name_transform==TransformsAvailable.cars_train_transfroms_autoaugment:
+        transform_fn=cars_train_transfroms_autoaugment(img_size=img_size,
                                                    mean=mean,
                                                    std=std,
                                                    interpolation=interpolation,
                                                    )
-        transform_fn_test=cars_test_transfroms_transFG(img_size=img_size,
+        transform_fn_test=cars_test_transforms(img_size=img_size,
                                                        mean=mean,
                                                        std=std,
                                                        interpolation=interpolation
                                                        )
+    elif name_transform==TransformsAvailable.cars_only_mixup :
+        transform_fn=cars_train_transforms_basic(img_size=img_size,
+                                                   mean=mean,
+                                                   std=std,
+                                                   interpolation=interpolation,
+                                                   )
+        transform_fn_test=cars_test_transforms(img_size=img_size,
+                                                       mean=mean,
+                                                       std=std,
+                                                       interpolation=interpolation
+                                                       )
+        collate_fn=collate_mixup()
     
+    elif name_transform==TransformsAvailable.cars_autoaugment_mixup :
+        transform_fn=cars_train_transfroms_autoaugment(img_size=img_size,
+                                                   mean=mean,
+                                                   std=std,
+                                                   interpolation=interpolation,
+                                                   )
+        transform_fn_test=cars_test_transforms(img_size=img_size,
+                                                       mean=mean,
+                                                       std=std,
+                                                       interpolation=interpolation
+                                                       )
+        collate_fn=collate_mixup()
+        
+    elif name_transform==TransformsAvailable.cars_transforms_eval:
+        raise "transform train not same eval"
     if transform_fn_test is None:   
     # if config.two_crops
     #el transforms_magenet aplica un center crop de 0.875 el paper que estoy mirnado no lo usa
-        transform_fn_test= transforms_imagenet_eval(img_size=img_size) 
+        transform_fn_test= cars_test_transforms(img_size=img_size,
+                                                   mean=mean,
+                                                   std=std,
+                                                   interpolation=interpolation,) 
     
     if name_collate==CollateAvailable.collate_two_images:
         collate_fn=collate_two_images(transform_fn)
@@ -142,8 +175,8 @@ def get_losses_fn( config)->dict:
 def get_callbacks(config,dm):
     #callbacks
     
-    early_stopping=EarlyStopping(monitor='_val_loss',
-                                 mode="min",
+    early_stopping=EarlyStopping(monitor='_valid_level0Accuracy',
+                                 mode="max",
                                 patience=10,
                                  verbose=True,
                                  check_finite =True
@@ -159,13 +192,24 @@ def get_callbacks(config,dm):
                         )
     learning_rate_monitor=LearningRateMonitor(logging_interval="epoch")
     
-    Accuracytest=AccuracyEnd(dm.test_dataloader(),prefix="test")
-    callbacks=[
-        Accuracytest,
+    accuracytest=AccuracyEnd(dm.test_dataloader(),prefix="test")
+    freeze_layers_name=config.freeze_layers_name
+    freeze_layer_enum=FreezeLayersAvailable[freeze_layers_name.lower()]
+    if freeze_layer_enum==FreezeLayersAvailable.none:
+        callbacks=[
+        accuracytest,
         learning_rate_monitor,
-        # early_stopping,
-        
+        early_stopping,
             ]
+    else:
+        freeze_layers=FreezeLayers(freeze_layer_enum)
+        callbacks=[
+            accuracytest,
+            learning_rate_monitor,
+            early_stopping,
+            freeze_layers
+                ]
+        
     return callbacks
 
 def get_system( datamodule:pl.LightningDataModule,
