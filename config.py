@@ -60,14 +60,10 @@ class LossDifferentExperimentsAvailable(Enum):
     crossentropy_and_triplet=6
     crossentropy_and_similitud=7
 
-
-         
-
 def create_config_dict(instance):
     return asdict(instance)
 @dataclass(init=True)
 class CONFIG(object):
-   
     
     experiment=ModelsAvailable.tf_efficientnet_b4_ns
     experiment_name:str=experiment.name
@@ -75,18 +71,15 @@ class CONFIG(object):
     architecture =ArchitectureType.standar
     architecture_name:str=architecture.name
     
-    
     #always in false
     loss_crossentropy_standar:bool=False
     loss_contrastive_fg:bool=False
     loss_contrastive_standar:bool=False
     loss_cosine_similarity_simsiam:bool=False
     loss_triplet:bool=False
-    
             
     loss_experiment_config=LossDifferentExperimentsAvailable.crossentropy_and_triplet
     loss_experiment_config_name:str=loss_experiment_config.name
-    
     
     freeze_layers =FreezeLayersAvailable.freeze_all_except_last
     freeze_layers_name:str=freeze_layers.name
