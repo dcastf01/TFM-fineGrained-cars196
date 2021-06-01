@@ -46,6 +46,7 @@ class CollateAvailable(Enum):
     none=1
     collate_two_images=2
     mixup=3
+    collate_to_triplet_loss=4
 
 class FreezeLayersAvailable(Enum):
     none=1
@@ -65,7 +66,7 @@ def create_config_dict(instance):
 @dataclass
 class CONFIG(object):
     
-    experiment=ModelsAvailable.resnet50
+    experiment=ModelsAvailable.tf_efficientnet_b4_ns
     experiment_name:str=experiment.name
 
     architecture =ArchitectureType.standar
@@ -94,7 +95,7 @@ class CONFIG(object):
     
     optim=Optim.sgd
     optim_name:str=optim.name
-    transform=TransformsAvailable.cars_only_mixup
+    transform=TransformsAvailable.cars_train_transforms_basic
     transform_name:str=transform.name
     
     collate_fn=CollateAvailable.none
@@ -103,7 +104,7 @@ class CONFIG(object):
     transform_to_test=TransformsAvailable.cars_transforms_eval
     transform_to_test:str=transform_to_test.name
     
-    lr:float = 0.035
+    lr:float = 0.0035
     AUTO_LR :bool= False
     # LAMBDA_IDENTITY = 0.0
     NUM_WORKERS:int = 4
@@ -114,9 +115,9 @@ class CONFIG(object):
     # SAVE_MODEL :bool= True
     PATH_CHECKPOINT: str= os.path.join(ROOT_WORKSPACE,"classification/model/checkpoint")
     
-    gpu0:bool=True
-    gpu1:bool=False
-    notes:str="TFM experiment3"
+    gpu0:bool=False
+    gpu1:bool=True
+    notes:str="TFM experiment2"
     ignore_globs:str="*.ckpt"
     
     #hyperparameters

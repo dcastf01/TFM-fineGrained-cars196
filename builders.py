@@ -12,7 +12,8 @@ from pytorch_lightning.plugins import DDPPlugin
 
 from callbacks import AccuracyEnd, FreezeLayers
 from config import (CONFIG, ArchitectureType, CollateAvailable, Dataset,
-                    ModelsAvailable, TransformsAvailable,FreezeLayersAvailable)
+                    FreezeLayersAvailable, ModelsAvailable,
+                    TransformsAvailable)
 from data_modules import (Cars196DataModule, FGVCAircraftDataModule,
                           GroceryStoreDataModule)
 from factory_augmentations import (TwoCropTransform, cars_test_transforms,
@@ -22,12 +23,13 @@ from factory_augmentations import (TwoCropTransform, cars_test_transforms,
                                    transforms_imagenet_eval,
                                    transforms_imagenet_train,
                                    transforms_noaug_train)
-from factory_collate import collate_mixup, collate_two_images
+from factory_collate import (collate_mixup, collate_triplet_loss,
+                             collate_two_images)
 from lit_api_model import LitApi
 from lit_general_model_level0 import LitGeneralModellevel0
 from lit_hierarchy_transformers import LitHierarchyTransformers
 from losses import (ContrastiveLossFG, CrosentropyStandar,
-                    SymNegCosineSimilarityLoss)
+                    SymNegCosineSimilarityLoss,TripletMarginLoss)
 
 
 def get_transform_collate_function(transforms:str,
@@ -103,6 +105,9 @@ def get_transform_collate_function(transforms:str,
         transform_fn=None
     elif name_collate==CollateAvailable.mixup:
         collate_fn=collate_mixup()
+    elif name_collate==CollateAvailable.collate_to_triplet_loss:
+        collate_fn=collate_triplet_loss(transform_fn)
+        transform_fn=None
     else:
         collate_fn=None
     
@@ -163,10 +168,11 @@ def get_losses_fn( config)->dict:
         losses_fn["contrastive_standar"]=NotImplementedError
     if config.loss_contrastive_fg:
         losses_fn["contrastive_fg"]=ContrastiveLossFG()
-    if config.loss_triplet:
-        losses_fn["triplet"]=NotImplementedError
     if config.loss_cosine_similarity_simsiam:
         losses_fn["similarity"]=SymNegCosineSimilarityLoss()
+    if config.loss_triplet:
+        losses_fn["triplet_loss"]=TripletMarginLoss()
+        
     if len(losses_fn)==0:
         raise("select unless one loss")
     

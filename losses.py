@@ -8,6 +8,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from lightly.loss import SymNegCosineSimilarityLoss
+from torch.nn import TripletMarginLoss
 
 class ContrastiveLossFG(nn.Module):
     
@@ -41,9 +42,8 @@ class CrosentropyStandar(nn.Module):
         return self.criterion(preds,targets)
 
     
-    
-    
 
+#no se usa
 class SupConLoss(nn.Module):
     """Supervised Contrastive Learning: https://arxiv.org/pdf/2004.11362.pdf.
     It also supports the unsupervised contrastive loss in SimCLR"""

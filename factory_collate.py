@@ -4,6 +4,8 @@ from lightly.data.collate import BaseCollateFunction
 from typing import List
 import torch
 from timm.data.mixup import FastCollateMixup
+import numpy as np
+
 def collate_two_images(transform):
     collate_fn=BaseCollateFunction(transform)                        
     return collate_fn
@@ -22,9 +24,9 @@ def collate_mixup():
     
     
 class TripletCollateFunction(nn.Module):
-    def __init__(self) -> None:
+    def __init__(self,transform) -> None:
         super().__init__()
-    
+        self.transform=transform
     def forward(self, batch: List[tuple]):
         """Turns a batch of tuples into a tuple of batches.
             Args:
@@ -43,8 +45,15 @@ class TripletCollateFunction(nn.Module):
                       for i in range(2 * batch_size)]
         
        #esta es la idea pero con la etiqueta contraria a la que se tenga
-        while positive_index == index:
-                positive_index = np.random.choice(self.label_to_indices[label1])
+        negative_images_transform=[]
+        for images,labels,filenames in batch:
+            label_new=labels
+            while label_new == labels:
+                index=torch.randint(high=batch_size,size =(1,))
+                image_negative,label_new,filename_negative=batch[index]
+            image_negative=self.transform(image_negative).unsqueeze_(0)
+            negative_images_transform.append(image_negative)
+            
         # list of labels
         labels = torch.LongTensor([item[1] for item in batch])
         # list of filenames
@@ -53,7 +62,9 @@ class TripletCollateFunction(nn.Module):
         # tuple of transforms
         transforms = (
             torch.cat(transforms[:batch_size], 0),
-            torch.cat(transforms[batch_size:], 0)
+            torch.cat(transforms[batch_size:], 0),
+            torch.cat(negative_images_transform[:batch_size],0)
+            #añadir las imágenes negativas
         )
 
         return transforms, labels, fnames

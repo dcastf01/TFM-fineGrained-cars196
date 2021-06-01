@@ -16,7 +16,7 @@ def create_model(model_chosen:ModelsAvailable,
                 img_size:int,
                 num_classes:int,
                 pretrained:bool,
-                is_loss_similarity_necessary:bool=False,
+                is_projection_embbeding_necessary:bool=False,
                     ):
             
             prefix_name=model_chosen.name[0:3]
@@ -47,7 +47,7 @@ def create_model(model_chosen:ModelsAvailable,
                     model.pre_classifier=model.forward_features
                     model.classifier=model.head
                     
-                if is_loss_similarity_necessary:
+                if is_projection_embbeding_necessary:
                     num_ftrs: int = 768
                     proj_hidden_dim: int = 768
                     pred_hidden_dim: int = 512
@@ -62,7 +62,7 @@ def create_model(model_chosen:ModelsAvailable,
                 model=timm.create_model(model_chosen.value,pretrained=pretrained,num_classes=num_classes)
                 model.pre_classifier=types.MethodType(standar_timm_forward_features,model)
                 model.classifier=model.fc
-                if is_loss_similarity_necessary:
+                if is_projection_embbeding_necessary:
                     num_ftrs: int = 2048
                     proj_hidden_dim: int = 2048
                     pred_hidden_dim: int = 512
@@ -76,11 +76,11 @@ def create_model(model_chosen:ModelsAvailable,
                 model=timm.create_model(model_chosen.value,pretrained=pretrained,num_classes=num_classes)
                 model.pre_classifier=types.MethodType(standar_timm_forward_features,model)
                 model.classifier=model.classifier
-                if is_loss_similarity_necessary:
-                    num_ftrs: int = 1280
-                    proj_hidden_dim: int = 1280
+                if is_projection_embbeding_necessary:
+                    num_ftrs: int = model.classifier.in_features
+                    proj_hidden_dim: int = model.classifier.in_features
                     pred_hidden_dim: int = 512
-                    out_dim: int = 1280
+                    out_dim: int = model.classifier.in_features
                     num_mlp_layers: int = 3
                     model=create_layers_to_similitud_loss(model,num_ftrs,
                                                     proj_hidden_dim,pred_hidden_dim,out_dim,
