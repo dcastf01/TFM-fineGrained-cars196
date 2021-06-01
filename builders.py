@@ -13,7 +13,7 @@ from pytorch_lightning.plugins import DDPPlugin
 from callbacks import AccuracyEnd, FreezeLayers
 from config import (CONFIG, ArchitectureType, CollateAvailable, Dataset,
                     FreezeLayersAvailable, ModelsAvailable,
-                    TransformsAvailable)
+                    TransformsAvailable,LossDifferentExperimentsAvailable)
 from data_modules import (Cars196DataModule, FGVCAircraftDataModule,
                           GroceryStoreDataModule)
 from factory_augmentations import (TwoCropTransform, cars_test_transforms,
@@ -162,17 +162,28 @@ def get_datamodule(name_dataset:str
 def get_losses_fn( config)->dict:
     losses_fn={}
     
-    if config.loss_crossentropy_standar:
+    loss_experiment_config_name=config.loss_experiment_config_name
+    loss_experiment_enum=LossDifferentExperimentsAvailable[loss_experiment_config_name.lower()]
+    a=loss_experiment_enum==LossDifferentExperimentsAvailable.only_crossentropy
+    if loss_experiment_enum==LossDifferentExperimentsAvailable.only_crossentropy:
         losses_fn["crossentropy"]=CrosentropyStandar()
-    if config.loss_contrastive_standar:
-        losses_fn["contrastive_standar"]=NotImplementedError
-    if config.loss_contrastive_fg:
+    elif loss_experiment_enum==LossDifferentExperimentsAvailable.only_contrastivefg:
         losses_fn["contrastive_fg"]=ContrastiveLossFG()
-    if config.loss_cosine_similarity_simsiam:
+    elif loss_experiment_enum==LossDifferentExperimentsAvailable.only_similitud_loss:
         losses_fn["similarity"]=SymNegCosineSimilarityLoss()
-    if config.loss_triplet:
+    elif loss_experiment_enum==LossDifferentExperimentsAvailable.only_triplet_loss:
         losses_fn["triplet_loss"]=TripletMarginLoss()
-        
+    elif loss_experiment_enum==LossDifferentExperimentsAvailable.crossentropy_and_contrastivefg:
+        losses_fn["crossentropy"]=CrosentropyStandar()
+        losses_fn["contrastive_fg"]=ContrastiveLossFG()
+    elif loss_experiment_enum==LossDifferentExperimentsAvailable.crossentropy_and_triplet:
+        losses_fn["crossentropy"]=CrosentropyStandar()
+        losses_fn["triplet_loss"]=TripletMarginLoss()
+    elif loss_experiment_enum==LossDifferentExperimentsAvailable.crossentropy_and_similitud:
+        losses_fn["crossentropy"]=CrosentropyStandar()
+        losses_fn["similarity"]=SymNegCosineSimilarityLoss()
+    elif loss_experiment_enum==LossDifferentExperimentsAvailable.custom:
+        pass
     if len(losses_fn)==0:
         raise("select unless one loss")
     

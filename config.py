@@ -31,7 +31,6 @@ class Dataset (Enum):
 class Optim(Enum):
     adam=1
     sgd=2
-
 class TransformsAvailable(Enum):
     cars_train_transforms_basic=1
     timm_noaug=2
@@ -41,7 +40,6 @@ class TransformsAvailable(Enum):
     cars_transforms_eval=6
     cars_only_mixup=7
     cars_autoaugment_mixup=8
-
 class CollateAvailable(Enum):
     none=1
     collate_two_images=2
@@ -52,19 +50,24 @@ class FreezeLayersAvailable(Enum):
     none=1
     freeze_all_except_last=2
     freeze_all_except_last_to_epoch25=3
+class LossDifferentExperimentsAvailable(Enum):
+    custom=0
+    only_crossentropy=1
+    only_contrastivefg=2
+    only_triplet_loss=3
+    only_similitud_loss=4
+    crossentropy_and_contrastivefg=5
+    crossentropy_and_triplet=6
+    crossentropy_and_similitud=7
 
-@dataclass
-class LossActive:
-    
-    crossentropy:bool=False
-    contrastive:bool=False
-    triplet_loss:bool=False
-    similitud_loss:bool=False
+
+         
 
 def create_config_dict(instance):
     return asdict(instance)
-@dataclass
+@dataclass(init=True)
 class CONFIG(object):
+   
     
     experiment=ModelsAvailable.tf_efficientnet_b4_ns
     experiment_name:str=experiment.name
@@ -72,22 +75,29 @@ class CONFIG(object):
     architecture =ArchitectureType.standar
     architecture_name:str=architecture.name
     
-    loss_crossentropy_standar:bool=True
+    
+    #always in false
+    loss_crossentropy_standar:bool=False
     loss_contrastive_fg:bool=False
     loss_contrastive_standar:bool=False
     loss_cosine_similarity_simsiam:bool=False
     loss_triplet:bool=False
     
-    freeze_layers =FreezeLayersAvailable.none
+            
+    loss_experiment_config=LossDifferentExperimentsAvailable.crossentropy_and_triplet
+    loss_experiment_config_name:str=loss_experiment_config.name
+    
+    
+    freeze_layers =FreezeLayersAvailable.freeze_all_except_last
     freeze_layers_name:str=freeze_layers.name
-    # experiment_net:str=experiment.value
+    # experiment_net:str=experiment.v)alue
     PRETRAINED_MODEL:bool=True
     
     #torch config
     DEVICE: str = "cuda" if torch.cuda.is_available() else "cpu"
     # TRAIN_DIR = "data/train"
     # VAL_DIR = "data/val"
-    batch_size:int =50
+    batch_size:int =15
     
     dataset=Dataset.cars196
     dataset_name:str=dataset.name
@@ -119,7 +129,6 @@ class CONFIG(object):
     gpu1:bool=True
     notes:str="TFM experiment2"
     ignore_globs:str="*.ckpt"
-    
+     
     #hyperparameters
     
-

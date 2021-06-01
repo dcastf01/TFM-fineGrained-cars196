@@ -1,5 +1,6 @@
 
 
+from dataclasses import asdict
 import datetime
 import logging
 import os
@@ -20,7 +21,7 @@ def main():
     logging.info("empezando setup del experimento")
     torch.backends.cudnn.benchmark = True
     config=CONFIG()
-    config_dict=create_config_dict(config)
+    config_dict=asdict(config)
     wandb.init(
             project="Hierarchical-label-transformers",
             entity='dcastf01',
