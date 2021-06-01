@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Archivo actual",
+            "name": "Python: Archivo actual just my code",
             "type": "python",
            
             "request": "launch",
@@ -17,8 +17,23 @@
             "justMyCode": true,
             // "preLaunchTask": "prepare persistent terminal"
 
+        },
+        {
+            "name": "Python: Archivo actual all code",
+            "type": "python",
+           
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            // "preLaunchTask": "launchenv",
+            "cwd": "${workspaceFolder}",
+            "env": { "PYTHONPATH": "${workspaceFolder}"},
+            "justMyCode": false,
+            // "preLaunchTask": "prepare persistent terminal"
+
             
             
-        }
+        },
+    
     ]
 }
