@@ -10,10 +10,10 @@ from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 from pytorch_lightning.plugins import DDPPlugin
 
-from callbacks import AccuracyEnd, FreezeLayers
+from callbacks import AccuracyEnd, FreezeLayers, PlotLatentSpace
 from config import (CONFIG, ArchitectureType, CollateAvailable, Dataset,
-                    FreezeLayersAvailable, ModelsAvailable,
-                    TransformsAvailable,LossDifferentExperimentsAvailable)
+                    FreezeLayersAvailable, LossDifferentExperimentsAvailable,
+                    ModelsAvailable, TransformsAvailable)
 from data_modules import (Cars196DataModule, FGVCAircraftDataModule,
                           GroceryStoreDataModule)
 from factory_augmentations import (TwoCropTransform, cars_test_transforms,
@@ -29,7 +29,7 @@ from lit_api_model import LitApi
 from lit_general_model_level0 import LitGeneralModellevel0
 from lit_hierarchy_transformers import LitHierarchyTransformers
 from losses import (ContrastiveLossFG, CrosentropyStandar,
-                    SymNegCosineSimilarityLoss,TripletMarginLoss)
+                    SymNegCosineSimilarityLoss, TripletMarginLoss)
 
 
 def get_transform_collate_function(transforms:str,
@@ -49,7 +49,9 @@ def get_transform_collate_function(transforms:str,
                                         interpolation=interpolation)
     elif name_transform==TransformsAvailable.timm_transforms_imagenet_train:
         transform_fn=transforms_imagenet_train(img_size=img_size,interpolation=Image.BILINEAR,)
-        
+    elif name_transform==TransformsAvailable.cars_train_transforms_autoaugment_and_imagenet:
+        transform_fn=transforms_imagenet_train(img_size=img_size,interpolation=Image.BILINEAR,
+                                               auto_augment="original-mstd0.5")
     elif name_transform==TransformsAvailable.timm_noaug:
         transform_fn=transforms_noaug_train(img_size=img_size)
     
@@ -164,7 +166,6 @@ def get_losses_fn( config)->dict:
     
     loss_experiment_config_name=config.loss_experiment_config_name
     loss_experiment_enum=LossDifferentExperimentsAvailable[loss_experiment_config_name.lower()]
-    a=loss_experiment_enum==LossDifferentExperimentsAvailable.only_crossentropy
     if loss_experiment_enum==LossDifferentExperimentsAvailable.only_crossentropy:
         losses_fn["crossentropy"]=CrosentropyStandar()
     elif loss_experiment_enum==LossDifferentExperimentsAvailable.only_contrastivefg:
@@ -209,14 +210,16 @@ def get_callbacks(config,dm):
                         )
     learning_rate_monitor=LearningRateMonitor(logging_interval="epoch")
     
-    accuracytest=AccuracyEnd(dm.test_dataloader(),prefix="test")
+    accuracytest=AccuracyEnd(dm.test_dataloader())
+    plt_latent_space=PlotLatentSpace(dm.test_dataloader())
     freeze_layers_name=config.freeze_layers_name
     freeze_layer_enum=FreezeLayersAvailable[freeze_layers_name.lower()]
     if freeze_layer_enum==FreezeLayersAvailable.none:
         callbacks=[
-        accuracytest,
-        learning_rate_monitor,
-        early_stopping,
+            accuracytest,
+            learning_rate_monitor,
+            early_stopping,
+            plt_latent_space,
             ]
     else:
         freeze_layers=FreezeLayers(freeze_layer_enum)
@@ -224,9 +227,10 @@ def get_callbacks(config,dm):
             accuracytest,
             learning_rate_monitor,
             early_stopping,
-            freeze_layers
+            freeze_layers,
+            plt_latent_space
                 ]
-        
+    
     return callbacks
 
 def get_system( datamodule:pl.LightningDataModule,
@@ -234,13 +238,12 @@ def get_system( datamodule:pl.LightningDataModule,
                 architecture_type:str,
                 model_choice:str,
                 optim:str,
+                scheduler_name:str,
                 lr:float,
                 img_size:int,
                 pretrained:bool,
                 epochs:int,
                 steps_per_epoch:int,
-                
-
                ):
     
     if isinstance(model_choice,str) and isinstance(architecture_type,str):
@@ -265,8 +268,9 @@ def get_system( datamodule:pl.LightningDataModule,
                                     lr,
                                     img_size,
                                     pretrained,
+                                    scheduler_name,
                                     epochs,
-                                    steps_per_epoch
+                                    steps_per_epoch,
                                     )
     elif architecture_type==ArchitectureType.api_model:
         model=LitApi(model_choice,
@@ -310,7 +314,7 @@ def get_trainer(wandb_logger,
                        gpus=gpus,
                        max_epochs=config.NUM_EPOCHS,
                        precision=config.precision_compute,
-                    #    limit_train_batches=0.1, #only to debug
+                    #    limit_train_batches=0.01, #only to debug
                     #    limit_val_batches=0.05, #only to debug
                     #    val_check_interval=1,
                         auto_lr_find=config.AUTO_LR,
@@ -320,7 +324,6 @@ def get_trainer(wandb_logger,
                        plugins=plugins,
                        callbacks=callbacks,
                        progress_bar_refresh_rate=5,
-                       
                        )
     
     return trainer

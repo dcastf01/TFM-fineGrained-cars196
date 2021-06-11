@@ -1,10 +1,7 @@
+import numpy as np
 
-
-import pandas as pd
-
-path="/home/dcast/Hierarchy-label-transformers/data/cars196/devkit/train.csv"
-
-
-algo=pd.read_csv(path)
-
-print(algo.describe())
+rng=np.random.default_rng()
+algo=rng.choice(20,size=10,replace=False)
+# algo=random.sample(range(100), 10)
+print(algo)
+print("hi")

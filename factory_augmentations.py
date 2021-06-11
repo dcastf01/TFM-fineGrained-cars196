@@ -40,7 +40,6 @@ def cars_train_transfroms_autoaugment(img_size:int=448,
                                     transforms.Resize((600, 600), interpolation),
                                     transforms.RandomCrop((img_size, img_size)),
                                     transforms.RandomHorizontalFlip(),
-                                    # AutoAugImageNetPolicy(),
                                     transforms.AutoAugment(),
                                     transforms.ToTensor(),
                                     transforms.Normalize(IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD)]
@@ -67,7 +66,7 @@ def cars_train_transforms_basic(img_size:int=224,
                                   ):
     basic_transform=transforms.Compose([
                                     transforms.Resize((600, 600), interpolation),
-                                    transforms.CenterCrop((img_size, img_size)),
+                                    transforms.RandomCrop((img_size, img_size)),
                                     transforms.ToTensor(),
                                     transforms.Normalize(IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD)]
                             )

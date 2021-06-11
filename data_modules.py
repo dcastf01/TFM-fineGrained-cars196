@@ -218,19 +218,19 @@ class Cars196DataModule(TemplateDataModule):
         
     def setup(self, stage=None):
         self.cars196_train = Cars196Loader( self.transform_fn,
-                                            self.img_folder_crop_train,
+                                            self.img_folder_train,
                                             self.train_annos_mat,
                                             self.root,
                                             split="train"
                                                       )
         self.cars196_val= Cars196Loader(    self.transform_fn_test,
-                                            self.img_folder_crop_test,
+                                            self.img_folder_test,
                                             self.test_annos_mat,
                                             self.root,
                                             split="val"
                                             )
         self.cars196_test = Cars196Loader(  self.transform_fn_test,
-                                            self.img_folder_crop_test,
+                                            self.img_folder_test,
                                             self.test_annos_mat,
                                             self.root,
                                             split="test"

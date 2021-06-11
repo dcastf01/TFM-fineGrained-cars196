@@ -117,3 +117,5 @@ dmypy.json
 data/
 wandb/
 *npz
+*jpg
+*png

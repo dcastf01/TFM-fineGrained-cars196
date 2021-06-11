@@ -5,7 +5,7 @@ import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 
-from config import Optim
+from config import Optim,SchedulerAvailable
 from metrics import get_metrics_collections_base
 
 import logging
@@ -14,6 +14,7 @@ class LitSystem(pl.LightningModule):
                  class_level,
                   lr:float=0.01,
                   optim:str="adam",
+                  scheduler_name:str="constant",
                   epoch:Optional[int]=None,
                   steps_per_epoch:Optional[int]=None, #len(train_loader)
                   ):
@@ -29,11 +30,14 @@ class LitSystem(pl.LightningModule):
 
         # log hyperparameters
         self.save_hyperparameters()    
+        self.scheduler_name=scheduler_name
+        self.scheduler=SchedulerAvailable[scheduler_name.lower()]
+        self.optim=Optim[optim.lower()]
         self.lr=lr
         self.epochs=epoch
         self.steps_per_epoch=steps_per_epoch
-        if isinstance(optim,str):
-            self.optim=Optim[optim.lower()]
+    
+            
         
     
     def on_epoch_start(self):
@@ -46,7 +50,13 @@ class LitSystem(pl.LightningModule):
         elif self.optim==Optim.sgd:
             optimizer= torch.optim.SGD(self.parameters(), lr=self.lr,momentum=0.9)
         # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=range(15,100,10),gamma=0.95)
-        scheduler=WarmupCosineSchedule(optimizer,warmup_steps=int(self.epochs*0.1),t_total=self.epochs)
+        if self.scheduler==SchedulerAvailable.lineal_ascent_cosine_descent:
+            scheduler=WarmupCosineSchedule(optimizer,warmup_steps=int(self.epochs*0.1),t_total=self.epochs)
+        elif self.scheduler==SchedulerAvailable.constant:
+            scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=range(1000,100,10),gamma=0.95)
+        elif self.scheduler==SchedulerAvailable.cosine_descent:
+            scheduler=WarmupCosineSchedule(optimizer,warmup_steps=0,t_total=self.epochs)
+        
         # scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer,
         #                                                  max_lr=self.lr, steps_per_epoch=self.steps_per_epoch,
         #                                 epochs=self.epochs, pct_start=0.2, cycle_momentum=False, div_factor=20)

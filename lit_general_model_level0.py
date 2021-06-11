@@ -23,6 +23,7 @@ class LitGeneralModellevel0(LitSystem):
                  lr:float,
                  img_size:int,
                  pretrained:bool,
+                 scheduler_name:str,
                  epoch:Optional[int]=None,
                  steps_per_epoch:Optional[int]=None, #len(train_loader)
                   ):
@@ -31,6 +32,7 @@ class LitGeneralModellevel0(LitSystem):
         super().__init__(fine_class,
                          lr,
                          optim,
+                         scheduler_name,
                          epoch=epoch,
                          steps_per_epoch=steps_per_epoch)
         num_classes=class_level["level0"]
@@ -132,7 +134,7 @@ class LitGeneralModellevel0(LitSystem):
         
     
     def train_similitud_loss(self,f,loss,split="train"):
-        f0,f1=f[:1]
+        f0,f1=f
         f0 = f0.flatten(start_dim=1)
         z0 = self.model.projection_mlp(f0)
         p0 = self.model.prediction_mlp(z0)
